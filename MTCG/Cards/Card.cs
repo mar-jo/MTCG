@@ -1,6 +1,6 @@
-﻿namespace MTCG;
+﻿namespace MTCG.Cards;
 
 public abstract class Card
 {
-    
+
 }

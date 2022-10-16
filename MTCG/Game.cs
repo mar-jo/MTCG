@@ -2,9 +2,9 @@
 
 public class Game
 {
-    private User PlayerOne { get; set; }
-    private User PlayerTwo { get; set; }
-    
+    public User PlayerOne { get; set; } = null!;
+    public User PlayerTwo { get; set; } = null!;
+
     public void CreatePlayers()
     {
         var username = "\0";
@@ -19,7 +19,7 @@ public class Game
         } while (username == null || password == null);
 
         PlayerOne = new User(username, password);
-        PlayerOne.PurchaseOrPlay();
+        var choice = PurchaseOrPlay();
 
         //Create Second Player
         do
@@ -30,17 +30,25 @@ public class Game
         } while (username == null || password == null);
 
         PlayerTwo = new User(username, password);
+        choice = PurchaseOrPlay();
+    }
+
+    public string PurchaseOrPlay()
+    {
+        var input = "\0";
+
+        do
+        {
+            Console.WriteLine("Would you like to (P)urchase Cards for your Stack or (C)ontinue the game?");
+        } while (input.ToLower() == "p" || input.ToLower() == "c");
+
+        return input.ToLower();
     }
 
     public void InitializeDecks()
     {
-        Console.WriteLine("Random Deck of Cards for both Players is being generated...\n");
+        Console.WriteLine("Random ListOfCards of Cards for both Players is being generated...\n");
         PlayerOne.CreateDeckOfCards();
         PlayerTwo.CreateDeckOfCards();
-    }
-
-    public void PurchaseCards()
-    {
-
     }
 }
