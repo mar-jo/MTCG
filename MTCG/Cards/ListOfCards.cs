@@ -9,13 +9,22 @@ public class ListOfCards
         List = new List<Card>();
     }
 
-    public void PurchaseCards()
+    public void AppendRandomCards()
     {
-        var input = '\0';
-        Console.WriteLine("Would you like to Purchase (M)onster Cards or (S)pell Cards?");
-        input = Console.ReadLine()![0];
+        Console.WriteLine("5 new Cards have been added to your STACK\n");
 
-        //insert purchase logic here
+        for (int i = 0; i < 5; i++)
+        {
+
+        }
+    }
+
+    public void printListOfCards()
+    {
+        foreach(var card in List)
+        {
+            Console.WriteLine($"- {card}\n");
+        }
     }
 
     public void CreateDeckOfCards(User player)

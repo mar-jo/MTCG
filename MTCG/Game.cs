@@ -19,7 +19,7 @@ public class Game
         } while (username == null || password == null);
 
         PlayerOne = new User(username, password);
-        var choice = PurchaseOrPlay();
+        PurchaseOrPlay(PlayerOne);
 
         //Create Second Player
         do
@@ -30,19 +30,24 @@ public class Game
         } while (username == null || password == null);
 
         PlayerTwo = new User(username, password);
-        choice = PurchaseOrPlay();
+        PurchaseOrPlay(PlayerTwo);
     }
 
-    public string PurchaseOrPlay()
+    public void PurchaseOrPlay(User player)
     {
         var input = "\0";
 
         do
         {
             Console.WriteLine("Would you like to (P)urchase Cards for your Stack or (C)ontinue the game?");
-        } while (input.ToLower() == "p" || input.ToLower() == "c");
+            input = Console.ReadLine();
+        } while (input?.ToLower() != "p" || input.ToLower() != "c");
 
-        return input.ToLower();
+        if (input.ToLower() == "p")
+        {
+            player.PurchaseCards();
+        }
+
     }
 
     public void InitializeDecks()

@@ -18,4 +18,23 @@ public class User
         this.Stack = new ListOfCards();
         this.Deck = new ListOfCards();
     }
+
+    public void PurchaseCards()
+    {
+        var input = "\0";
+
+        Console.WriteLine("You have following cards in your STACK\n");
+        Stack.printListOfCards();
+
+        do
+        {
+            Console.WriteLine("Would you like to purchase a Package of 5 Cards [y/n]");
+            input = Console.ReadLine();
+        } while (input.ToLower() is not "y" or "n");
+
+        if (input.ToLower() == "y")
+        {
+            Stack.AppendRandomCards();
+        }
+    }
 }
