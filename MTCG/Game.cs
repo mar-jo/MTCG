@@ -27,7 +27,7 @@ public class Game
             Console.WriteLine("Player2, input a Username and a Password: ");
             username = Console.ReadLine();
             password = Console.ReadLine();
-        } while (username == null || password == null);
+        } while (username == null && password == null);
 
         PlayerTwo = new User(username, password);
         PurchaseOrPlay(PlayerTwo);
@@ -41,7 +41,7 @@ public class Game
         {
             Console.WriteLine("Would you like to (P)urchase Cards for your Stack or (C)ontinue the game?");
             input = Console.ReadLine();
-        } while (input?.ToLower() != "p" || input.ToLower() != "c");
+        } while (input?.ToLower() != "p" && input.ToLower() != "c");
 
         if (input.ToLower() == "p")
         {
@@ -53,7 +53,7 @@ public class Game
     public void InitializeDecks()
     {
         Console.WriteLine("Random ListOfCards of Cards for both Players is being generated...\n");
-        PlayerOne.CreateDeckOfCards();
-        PlayerTwo.CreateDeckOfCards();
+        PlayerOne.Deck.CreateDeckOfCards();
+        PlayerTwo.Deck.CreateDeckOfCards();
     }
 }

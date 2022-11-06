@@ -13,21 +13,41 @@ public class ListOfCards
     {
         Console.WriteLine("5 new Cards have been added to your STACK\n");
 
+        Random rnd = new Random();
+        int num = rnd.Next(0,1);
+
         for (int i = 0; i < 5; i++)
         {
-
+            if (num == 0)
+            {
+                List.Add(new MonsterCard());
+            }
+            else
+            {
+                List.Add(new SpellCard());
+            }
         }
+
+        Console.WriteLine("Your UPDATED List of Cards:\n");
+        printListOfCards();
     }
 
     public void printListOfCards()
     {
-        foreach(var card in List)
+        if (List.Count == 0)
         {
-            Console.WriteLine($"- {card}\n");
+            Console.WriteLine("Seems like there's nothing in here...\n");
+        }
+        else
+        {
+            foreach (var card in List)
+            {
+                Console.WriteLine($"- {card}\n");
+            }
         }
     }
 
-    public void CreateDeckOfCards(User player)
+    public void CreateDeckOfCards()
     {
         if (List.Count < 4)
         {
@@ -40,7 +60,7 @@ public class ListOfCards
         {
             var randomInt = random.Next(0, List.Count - 1);
             //dogshit code
-            player.Deck.List.Add(List.ElementAt(randomInt));
+            this.List.Add(List.ElementAt(randomInt));
             List.RemoveAt(randomInt);
         }
     }

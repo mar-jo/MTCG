@@ -30,7 +30,7 @@ public class User
         {
             Console.WriteLine("Would you like to purchase a Package of 5 Cards [y/n]");
             input = Console.ReadLine();
-        } while (input.ToLower() is not "y" or "n");
+        } while (input?.ToLower() is not "y" or "n");
 
         if (input.ToLower() == "y")
         {
