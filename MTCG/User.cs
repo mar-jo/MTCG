@@ -24,7 +24,7 @@ public class User
         var input = "\0";
 
         Console.WriteLine("You have following cards in your STACK\n");
-        Stack.printListOfCards();
+        Stack.PrintListOfCards();
 
         do
         {

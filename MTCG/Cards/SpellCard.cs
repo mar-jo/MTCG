@@ -8,14 +8,14 @@ public class SpellCard : Card
 
     public sealed override string? Name
     {
-        get { return Name; }
-        set { Name = value; }
+        get => Name;
+        set => Name = value;
     }
 
-    public override int Damage
+    public sealed override int Damage
     {
-        get { return Damage; }
-        set { Damage = value; }
+        get => Damage;
+        set => Damage = value;
     }
 
     public SpellCard()
@@ -24,5 +24,21 @@ public class SpellCard : Card
         int num = rnd.Next(0, 5);
 
         Type = (Element)num;
+
+        switch (num)
+        {
+            case 0:
+                Damage = 10;
+                break;
+            case 1:
+                Damage = 15;
+                break;
+            case 2:
+                Damage = 20;
+                break;
+            default:
+                throw new Exception("An error has occured during Damage Initialization.");
+                break;
+        }
     }
 }

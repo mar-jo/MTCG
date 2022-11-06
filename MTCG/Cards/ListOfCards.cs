@@ -29,10 +29,10 @@ public class ListOfCards
         }
 
         Console.WriteLine("Your UPDATED List of Cards:\n");
-        printListOfCards();
+        PrintListOfCards();
     }
 
-    public void printListOfCards()
+    public void PrintListOfCards()
     {
         if (List.Count == 0)
         {
@@ -42,7 +42,7 @@ public class ListOfCards
         {
             foreach (var card in List)
             {
-                Console.WriteLine($"- {card}\n");
+                Console.WriteLine($"- {card.Name}\n");
             }
         }
     }

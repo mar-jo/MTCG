@@ -4,26 +4,47 @@ namespace MTCG.Cards;
 
 public class MonsterCard : Card
 {
-    public Monster Type { get; }
+    public Monster MonsterType { get; }
+    public Element ElementType { get; }
 
     public sealed override string? Name
     {
-        get { return Name; }
-        set { Name = value; }
+        get => Name;
+        set => Name = value;
     }
 
-    public override int Damage
+    public sealed override int Damage
     {
-        get { return Damage; }
-        set { Damage = value; }
+        get => Damage;
+        set => Damage = value;
     }
 
     public MonsterCard()
     {
         Random rnd = new Random();
-        int num = rnd.Next(0, 5);
+        int numMonster = rnd.Next(0, 5);
+        int numElement = rnd.Next(0, 2);
 
-        Type = (Monster)num;
-        Name = Enum.GetName(typeof(Monster), num);
+        MonsterType = (Monster)numMonster;
+        ElementType = (Element)numElement;
+        Name = Enum.GetName(typeof(Monster), numMonster);
+
+        switch (numElement)
+        {
+            case 0:
+                Damage = 10;
+                break;
+            case 1:
+                Damage = 15;
+                break;
+            case 2:
+                Damage = 20;
+                break;
+            default:
+                throw new Exception("An error has occured during Damage Initialization.");
+                break;
+        }
+
+        Damage = 30; // TODO: Needs to be changed and fitted to each M-Type
     }
 }

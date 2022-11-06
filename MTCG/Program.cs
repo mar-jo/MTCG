@@ -11,6 +11,8 @@ class Program
         game.CreatePlayers();
 
         game.InitializeDecks();
+
+        // TODO: Battle Logic
     }
 }
 
