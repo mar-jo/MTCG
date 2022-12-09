@@ -45,7 +45,7 @@ public class ListOfCards
         {
             foreach (var card in List)
             {
-                Console.WriteLine($"- {card.Name}\n");
+                Console.WriteLine($"- {card.Name} Card\n");
             }
         }
     }

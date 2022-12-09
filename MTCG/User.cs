@@ -34,7 +34,13 @@ public class User
 
         if (input.ToLower() == "y")
         {
+            this.Coins -= 5;
             Stack.AppendRandomCards();
         }
+    }
+
+    public void ResetDeck()
+    {
+
     }
 }

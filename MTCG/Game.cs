@@ -60,14 +60,24 @@ public class Game
             new Exception($"Cannot create ListOfCards if Stack has less than 4 Cards : {player.Stack.List.Count} Cards");
         }
 
-        Random random = new();
+        int select = 0;
 
-        for (int i = 0; i < 5; i++)
+        Console.WriteLine($"{player.Username}, you can chose 4 cards out of your Stack to use in the battle!\n");
+
+        for (int i = 0; i < 4; i++)
         {
-            var randomInt = random.Next(0, player.Stack.List.Count - 1);
+            Console.WriteLine("Cards remaining to chose from:\n");
+            player.Stack.PrintListOfCards();
+
+            do
+            {
+                Console.WriteLine($"Choose a card between 0 and {player.Stack.List.Count - 1}: ");
+                select = int.Parse(Console.ReadLine() ?? string.Empty);
+            } while (select < 0 || select > player.Stack.List.Count - 1);
+
             //dogshit code
-            player.Deck.List.Add(player.Stack.List.ElementAt(randomInt));
-            player.Stack.List.RemoveAt(randomInt);
+            player.Deck.List.Add(player.Stack.List.ElementAt(select));
+            player.Stack.List.RemoveAt(select);
         }
 
         Console.WriteLine($"Deck of {player.Username}, locked and loaded!\n");
@@ -79,5 +89,13 @@ public class Game
         Console.WriteLine("Random ListOfCards of Cards for both Players is being generated...\n");
         CreateDeckOfCards(PlayerOne);
         CreateDeckOfCards(PlayerTwo);
+    }
+
+    public void EndOfGame()
+    {
+        Console.WriteLine("Game Over!");
+
+        PlayerOne.ResetDeck();
+        PlayerTwo.ResetDeck();
     }
 }

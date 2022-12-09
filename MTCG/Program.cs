@@ -13,6 +13,8 @@ class Program
         game.InitializeDecks();
 
         // TODO: Battle Logic
+
+        game.EndOfGame();
     }
 }
 
