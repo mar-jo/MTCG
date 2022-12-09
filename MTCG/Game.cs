@@ -1,4 +1,7 @@
-﻿namespace MTCG;
+﻿using System.Collections.Generic;
+using System.Reflection.Emit;
+
+namespace MTCG;
 
 public class Game
 {
@@ -50,10 +53,31 @@ public class Game
 
     }
 
+    public void CreateDeckOfCards(User player)
+    {
+        if (player.Stack.List.Count < 4)
+        {
+            new Exception($"Cannot create ListOfCards if Stack has less than 4 Cards : {player.Stack.List.Count} Cards");
+        }
+
+        Random random = new();
+
+        for (int i = 0; i < 5; i++)
+        {
+            var randomInt = random.Next(0, player.Stack.List.Count - 1);
+            //dogshit code
+            player.Deck.List.Add(player.Stack.List.ElementAt(randomInt));
+            player.Stack.List.RemoveAt(randomInt);
+        }
+
+        Console.WriteLine($"Deck of {player.Username}, locked and loaded!\n");
+        player.Deck.PrintListOfCards();
+    }
+
     public void InitializeDecks()
     {
         Console.WriteLine("Random ListOfCards of Cards for both Players is being generated...\n");
-        PlayerOne.Deck.CreateDeckOfCards();
-        PlayerTwo.Deck.CreateDeckOfCards();
+        CreateDeckOfCards(PlayerOne);
+        CreateDeckOfCards(PlayerTwo);
     }
 }

@@ -3,7 +3,6 @@
 public class ListOfCards
 {
     public List<Card> List { get; }
-
     public ListOfCards()
     {
         List = new List<Card>();
@@ -14,10 +13,14 @@ public class ListOfCards
         Console.WriteLine("5 new Cards have been added to your STACK\n");
 
         Random rnd = new Random();
-        int num = rnd.Next(0,1);
+        int num = 0;
 
         for (int i = 0; i < 5; i++)
         {
+            num = rnd.Next(0, 2);
+
+            Console.WriteLine(num);
+
             if (num == 0)
             {
                 List.Add(new MonsterCard());
@@ -44,24 +47,6 @@ public class ListOfCards
             {
                 Console.WriteLine($"- {card.Name}\n");
             }
-        }
-    }
-
-    public void CreateDeckOfCards()
-    {
-        if (List.Count < 4)
-        {
-            throw new Exception("Cannot create ListOfCards if Stack has less than 4 Cards!");
-        }
-
-        Random random = new();
-
-        for (int i = 0; i < 5; i++)
-        {
-            var randomInt = random.Next(0, List.Count - 1);
-            //dogshit code
-            this.List.Add(List.ElementAt(randomInt));
-            List.RemoveAt(randomInt);
         }
     }
 }

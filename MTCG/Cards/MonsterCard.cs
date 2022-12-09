@@ -7,17 +7,11 @@ public class MonsterCard : Card
     public Monster MonsterType { get; }
     public Element ElementType { get; }
 
-    public sealed override string? Name
-    {
-        get => Name;
-        set => Name = value;
-    }
+    // backing fields
 
-    public sealed override int Damage
-    {
-        get => Damage;
-        set => Damage = value;
-    }
+    public sealed override string? Name { get; set; }
+
+    public sealed override int Damage { get; set; }
 
     public MonsterCard()
     {
@@ -27,7 +21,8 @@ public class MonsterCard : Card
 
         MonsterType = (Monster)numMonster;
         ElementType = (Element)numElement;
-        Name = Enum.GetName(typeof(Monster), numMonster);
+        string[] names = Enum.GetNames(typeof(Monster));
+        Name = names[numMonster];
 
         switch (numElement)
         {

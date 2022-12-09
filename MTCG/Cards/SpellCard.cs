@@ -6,24 +6,18 @@ public class SpellCard : Card
 {
     public Element Type { get; }
 
-    public sealed override string? Name
-    {
-        get => Name;
-        set => Name = value;
-    }
+    public sealed override string? Name { get; set; }
 
-    public sealed override int Damage
-    {
-        get => Damage;
-        set => Damage = value;
-    }
+    public sealed override int Damage { get; set; }
 
     public SpellCard()
     {
         Random rnd = new Random();
-        int num = rnd.Next(0, 5);
+        int num = rnd.Next(0, 2);
 
         Type = (Element)num;
+        string[] names = Enum.GetNames(typeof(Element));
+        Name = names[num];
 
         switch (num)
         {
