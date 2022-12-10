@@ -8,7 +8,7 @@ public class ListOfCards
         List = new List<Card>();
     }
 
-    public void AppendRandomCards()
+    public void AppendCards()
     {
         Console.WriteLine("5 new Cards have been added to your STACK\n");
 
@@ -18,8 +18,6 @@ public class ListOfCards
         for (int i = 0; i < 5; i++)
         {
             num = rnd.Next(0, 2);
-
-            Console.WriteLine(num);
 
             if (num == 0)
             {
@@ -45,7 +43,7 @@ public class ListOfCards
         {
             foreach (var card in List)
             {
-                Console.WriteLine($"- {card.Name} Card\n");
+                Console.WriteLine($"[-][{card.GetType().Name.ToUpper()}] : {card.Name} Card\n");
             }
         }
     }

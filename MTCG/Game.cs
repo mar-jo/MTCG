@@ -91,6 +91,11 @@ public class Game
         CreateDeckOfCards(PlayerTwo);
     }
 
+    public void Battle()
+    {
+
+    }
+
     public void EndOfGame()
     {
         Console.WriteLine("Game Over!");

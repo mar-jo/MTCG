@@ -7,8 +7,6 @@ public class MonsterCard : Card
     public Monster MonsterType { get; }
     public Element ElementType { get; }
 
-    // backing fields
-
     public sealed override string? Name { get; set; }
 
     public sealed override int Damage { get; set; }

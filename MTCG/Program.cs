@@ -8,12 +8,10 @@ class Program
         Game game = new();
 
         Console.WriteLine("Welcome to MONSTER TRADING CARDS GAME\n");
+
         game.CreatePlayers();
-
         game.InitializeDecks();
-
-        // TODO: Battle Logic
-
+        game.Battle();
         game.EndOfGame();
     }
 }

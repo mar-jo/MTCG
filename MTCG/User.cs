@@ -1,4 +1,5 @@
 ﻿using MTCG.Cards;
+using System.Numerics;
 
 namespace MTCG;
 
@@ -35,12 +36,19 @@ public class User
         if (input.ToLower() == "y")
         {
             this.Coins -= 5;
-            Stack.AppendRandomCards();
+            Stack.AppendCards();
         }
     }
 
     public void ResetDeck()
     {
+        for (var i = 0; i < 4; i++)
+        {
+            this.Stack.List.Add(this.Deck.List.Last());
+            this.Deck.List.Remove(this.Deck.List.Last());
+        }
 
+        Console.WriteLine($"[!] DEBUG : Stack of {this.Username}\n");
+        this.Stack.PrintListOfCards();
     }
 }
