@@ -7,4 +7,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="root\msg\" />
+    <Folder Include="root\web\" />
+  </ItemGroup>
+
 </Project>
