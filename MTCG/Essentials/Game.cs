@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Reflection.Emit;
 
-namespace MTCG;
+namespace MTCG.Essentials;
 
 public class Game
 {

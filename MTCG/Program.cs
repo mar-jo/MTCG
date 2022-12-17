@@ -1,10 +1,13 @@
 ﻿using System;
+using MTCG.Database;
+
 namespace MTCG;
 
 class Program
 {
     static void Main(string[] args)
     {
+        DBHandler.Connect();
         HTTPServer.Server();
 
 

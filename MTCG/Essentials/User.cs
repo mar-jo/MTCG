@@ -1,7 +1,7 @@
 ﻿using MTCG.Cards;
 using System.Numerics;
 
-namespace MTCG;
+namespace MTCG.Essentials;
 
 public class User
 {
@@ -13,11 +13,11 @@ public class User
 
     public User(string name, string password)
     {
-        this.Username = name;
-        this.Password = password;
-        this.Coins = 20;
-        this.Stack = new ListOfCards();
-        this.Deck = new ListOfCards();
+        Username = name;
+        Password = password;
+        Coins = 20;
+        Stack = new ListOfCards();
+        Deck = new ListOfCards();
     }
 
     public void PurchaseCards()
@@ -35,7 +35,7 @@ public class User
 
         if (input.ToLower() == "y")
         {
-            this.Coins -= 5;
+            Coins -= 5;
             Stack.AppendCards();
         }
     }
@@ -44,11 +44,11 @@ public class User
     {
         for (var i = 0; i < 4; i++)
         {
-            this.Stack.List.Add(this.Deck.List.Last());
-            this.Deck.List.Remove(this.Deck.List.Last());
+            Stack.List.Add(Deck.List.Last());
+            Deck.List.Remove(Deck.List.Last());
         }
 
-        Console.WriteLine($"[!] DEBUG : Stack of {this.Username}\n");
-        this.Stack.PrintListOfCards();
+        Console.WriteLine($"[!] DEBUG : Stack of {Username}\n");
+        Stack.PrintListOfCards();
     }
 }
