@@ -1,11 +1,15 @@
 ﻿using MTCG.Cards;
 using System.Numerics;
+using Newtonsoft.Json;
 
 namespace MTCG.Essentials;
 
 public class User
 {
+    [JsonProperty("username")]
     public string Username { get; set; }
+    
+    [JsonProperty("password")]
     public string Password { get; set; }
     public int Coins { get; set; }
     public ListOfCards Stack { get; }
