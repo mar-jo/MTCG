@@ -7,9 +7,10 @@ public class MonsterCard : Card
     public Monster MonsterType { get; }
     public Element ElementType { get; }
 
-    public sealed override string? Name { get; set; }
+    public string? Id { get; set; }
+    public string? Name { get; set; }
 
-    public sealed override int Damage { get; set; }
+    public double Damage { get; set; }
 
     public MonsterCard()
     {

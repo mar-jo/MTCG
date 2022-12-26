@@ -23,6 +23,14 @@ public static class MessageHandler
         return data;
     }
 
+    private static void CreateToken(Dictionary<string, string> data)
+    {
+        if (data["Authorization"] == "None")
+        {
+            data["Authorization"] = data["Username"] + "-mtcgToken";
+        }
+    }
+
     public static Dictionary<string, string> GetFirstLine(string data)
     {
         var message = new Dictionary<string, string>();
@@ -35,6 +43,8 @@ public static class MessageHandler
         message.Add("HTTP", firstLineParts[2]);
 
         CheckAuthorization(message, data);
+
+        // Debug
         Console.WriteLine($"[!] Method: {message["Method"]}, Path: {message["Path"]}, HTTP: {message["HTTP"]}, Authorization: {message["Authorization"]}.");
 
         return message;
@@ -42,10 +52,24 @@ public static class MessageHandler
 
     public static void BranchHandler(Dictionary<string, string> data, string rest)
     {
+        Dictionary<string, string> combined = new Dictionary<string, string>();
+
         switch (data["Path"])
         {
             case "/users":
-                var combined = ParseData.ParseUser(data, rest);
+                combined = ParseData.ParseUser(data, rest);
+                break;
+            case "/sessions":
+                combined = ParseData.ParseUser(data, rest);
+                
+                //TODO: Add handler to check whether login was successful or not
+                CreateToken(combined);
+                break;
+            case "/packages":
+                var fiveCards = ParseData.ParsePackages(data, rest);
+                break;
+            case "/transactions/packages":
+                Console.WriteLine("Transactions branch");
                 break;
             default:
                 throw new Exception("Invalid branch");

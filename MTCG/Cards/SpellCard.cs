@@ -5,10 +5,10 @@ namespace MTCG.Cards;
 public class SpellCard : Card
 {
     public Element Type { get; }
+    public string? Id { get; set; }
+    public string? Name { get; set; }
 
-    public sealed override string? Name { get; set; }
-
-    public sealed override int Damage { get; set; }
+    public double Damage { get; set; }
 
     public SpellCard()
     {

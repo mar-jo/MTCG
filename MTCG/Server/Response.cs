@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using System.Net;
 
 namespace MTCG.Server;
 
@@ -9,19 +10,19 @@ public static class Response
 {
     public static string FormulateResponse(Dictionary<string, string> data)
     {
-        string statusLine = "HTTP/1.1 200 OK\r\n";
-        string headers = "Content-Type: text/html; charset=utf-8\r\n";
+        HttpStatusCode statusCode = HttpStatusCode.OK;
 
-        int headersLength = Encoding.ASCII.GetByteCount(statusLine + headers);
+        string headerStuff = $"{data["HTTP"]} {(int)statusCode} {statusCode}" + Environment.NewLine;
+
         int bodyLength = 0;
 
         for (int i = 4; i < data.Count; i++)
         {
-            bodyLength += Encoding.ASCII.GetByteCount($"-> {data.Keys.ElementAt(i).ToUpper()} : {data[data.Keys.ElementAt(i)]}\n");
+            bodyLength += $"-> {data.Keys.ElementAt(i).ToUpper()} : {data[data.Keys.ElementAt(i)]}\n".Length;
         }
 
-        headers += $"Content-Length: {headersLength + bodyLength}\r\n";
-        headers += "\r\n";
+        headerStuff += $"Content-Length: {bodyLength}" + Environment.NewLine;
+        headerStuff += "Content-Type: text/html; charset=utf-8" + Environment.NewLine + "" + Environment.NewLine;
 
         string body = "";
         for (int i = 4; i < data.Count; i++)
@@ -29,7 +30,7 @@ public static class Response
             body += $"-> {data.Keys.ElementAt(i).ToUpper()} : {data[data.Keys.ElementAt(i)]}\n";
         }
 
-        string response = statusLine + headers + body;
+        string response = headerStuff + body + Environment.NewLine + Environment.NewLine;
 
         return response;
     }

@@ -1,10 +1,17 @@
 ﻿using MTCG.Enums;
+using Newtonsoft.Json;
 
 namespace MTCG.Cards;
 
-public abstract class Card
+public class Card
 {
-    public abstract string? Name { get; set; }
-    public abstract int Damage { get; set; }
+    [JsonProperty("Id")]
+    public string? Id { get; set; }
+    [JsonProperty("Name")]
+    public string? Name { get; set; }
+    [JsonProperty("Damage")]
+    public double Damage { get; set; }
+
+    public Card() { }
 
 }

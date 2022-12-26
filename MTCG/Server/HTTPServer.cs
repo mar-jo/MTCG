@@ -20,7 +20,7 @@ class HTTPServer
 
             while (true)
             {
-                Console.Write("Waiting for a connection... ");
+                Console.Write("[%] Listening to incoming Connections... ");
                 TcpClient client = server.AcceptTcpClient();
 
                 // IP always the same obviously but it still looks cool...
@@ -30,25 +30,30 @@ class HTTPServer
 
                 Task.Factory.StartNew(() =>
                 {
-                    Byte[] bytes = new Byte[256];
+                    Byte[] bytes = new Byte[1024];
 
                     NetworkStream stream = client.GetStream();
                     int i;
+                    Dictionary<string, string> branch = new Dictionary<string, string>();
 
                     while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
                     {
                         var data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
-                        Console.WriteLine($"[!] RECEIVED :\n {data}");
+                        Console.WriteLine($"\n[!] RECEIVED :\n {data}");
 
-                        var branch = MessageHandler.GetFirstLine(data);
+                        branch = MessageHandler.GetFirstLine(data);
                         MessageHandler.BranchHandler(branch, data);
-
-                        var message = Response.FormulateResponse(branch);
-                        var encodedMsg = System.Text.Encoding.ASCII.GetBytes(message);
                         
-                        stream.Write(encodedMsg, 0, encodedMsg.Length);
-
+                        // TODO: Replace this shit with something more elegant
+                        if (i is not 0 and < 256)
+                        {
+                            break;
+                        }
                     }
+
+                    var message = Response.FormulateResponse(branch);
+                    var encodedMsg = System.Text.Encoding.ASCII.GetBytes(message);
+                    stream.Write(encodedMsg, 0, encodedMsg.Length);
 
                     client.Close();
                 });
