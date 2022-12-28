@@ -25,6 +25,29 @@ public static class ParseData
         return dict;
     }
 
+    public static string[] ParseCard(Dictionary<string, string> dict, string data)
+    {
+        var lines = data.Split(Environment.NewLine);
+        var card_ids = new string[4];
+
+        foreach (var line in lines)
+        {
+            if (line.StartsWith("["))
+            {
+                dynamic? cards = JsonConvert.DeserializeObject<string[]>(line);
+
+                for (int i = 0; i < 4; i++)
+                {
+                    card_ids[i] = cards?[i];
+                }
+
+                Console.WriteLine($"[!] IDs: {card_ids[0]}, {card_ids[1]}, {card_ids[2]}, {card_ids[3]}");
+            }
+        }
+
+        return card_ids;
+    }
+
     public static Card[] ParsePackages(Dictionary<string, string> dict, string data)
     {
         var lines = data.Split(Environment.NewLine);

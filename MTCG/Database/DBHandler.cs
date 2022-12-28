@@ -37,24 +37,46 @@ public class DBHandler
         }
     }
 
-    public static void InsertData()
+    public static void AcquirePackage(Dictionary<string, string> user)
     {
-        ConnectDB();
+        Console.WriteLine("[%] Not implemented yet!");
+    }
 
-        using (var command = new NpgsqlCommand("INSERT INTO inventory (name, quantity) VALUES (@n1, @q1), (@n2, @q2), (@n3, @q3)", _conn))
+    public static void DisplayCards(Dictionary<string, string> user)
+    {
+        try
         {
-            //TODO: Update Parameters
-            command.Parameters.AddWithValue("n1", "banana");
-            command.Parameters.AddWithValue("q1", 150);
-            command.Parameters.AddWithValue("n2", "orange");
-            command.Parameters.AddWithValue("q2", 154);
-            command.Parameters.AddWithValue("n3", "apple");
-            command.Parameters.AddWithValue("q3", 100);
-
-            int nRows = command.ExecuteNonQuery();
-            Console.Out.WriteLine(String.Format("Number of rows inserted={0}", nRows));
+            if (user["Authorization"] == "None")
+            {
+                throw new Exception("[%] Invalid Authorization!");
+            }
+            else
+            {
+                Console.WriteLine("[%] Not implemented yet!");
+            }
         }
+        catch (Exception e)
+        {
+            Console.WriteLine($"{e.Data}");
+        }
+    }
 
-        CloseDB();
+    public static void ConfigureDeck(Dictionary<string, string> user, string[] ids)
+    {
+        try
+        {
+            if (user["Authorization"] == "None")
+            {
+                throw new Exception("[%] Invalid Authorization!");
+            }
+            else
+            {
+                Console.WriteLine("[%] Not implemented yet!");
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"{e.Data}");
+        }
     }
 }

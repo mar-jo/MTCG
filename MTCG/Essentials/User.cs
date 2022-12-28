@@ -11,6 +11,10 @@ public class User
     
     [JsonProperty("password")]
     public string Password { get; set; }
+    [JsonProperty("bio")]
+    public string Bio { get; set; }
+    [JsonProperty("image")]
+    public string Image { get; set; }
     public int Coins { get; set; }
     public ListOfCards Stack { get; }
     public ListOfCards Deck { get; }

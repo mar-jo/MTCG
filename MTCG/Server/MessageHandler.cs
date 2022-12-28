@@ -1,8 +1,11 @@
-﻿namespace MTCG.Server;
+﻿using MTCG.Database;
+
+namespace MTCG.Server;
 
 public static class MessageHandler
 {
-    private static Dictionary<string, string> CheckAuthorization(Dictionary<string, string> data, string content)
+    private static Dictionary<string, string> _combined = new();
+    private static void CheckAuthorization(Dictionary<string, string> data, string content)
     {
         var lines = content.Split(Environment.NewLine);
 
@@ -19,8 +22,38 @@ public static class MessageHandler
         {
             data.Add("Authorization", "None");
         }
+    }
 
-        return data;
+    private static string GetUsernameOutOfToken(Dictionary<string, string> data)
+    {
+        // in the library, "Authorization" has a string that looks something like "Basic kienboec-mtcgtoken", get the "kienboec" out of it, save it in a string and return it.
+
+        var splitInTwo = data["Authorization"].Split('-')[0];
+        var username = splitInTwo.Split(' ')[1];
+
+        Console.WriteLine("[!] Username: " + username);
+
+        return username;
+    }
+
+    private static bool IsAuthorized(Dictionary<string, string> data)
+    {
+        if (data["Authorization"] == "None")
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsAdmin(Dictionary<string, string> data)
+    {
+        if (data["Authorization"] == "Basic admin-mtcgToken")
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private static void CreateToken(Dictionary<string, string> data)
@@ -52,24 +85,72 @@ public static class MessageHandler
 
     public static void BranchHandler(Dictionary<string, string> data, string rest)
     {
-        Dictionary<string, string> combined = new Dictionary<string, string>();
+        //Dictionary<string, string> combined = new Dictionary<string, string>();
 
+        if (data["Path"] == $"/users/{GetUsernameOutOfToken(data)}")
+        {
+
+        }
+        
         switch (data["Path"])
         {
             case "/users":
-                combined = ParseData.ParseUser(data, rest);
+                _combined = ParseData.ParseUser(data, rest);
                 break;
             case "/sessions":
-                combined = ParseData.ParseUser(data, rest);
+                _combined = ParseData.ParseUser(data, rest);
                 
                 //TODO: Add handler to check whether login was successful or not
-                CreateToken(combined);
+                CreateToken(_combined);
                 break;
             case "/packages":
-                var fiveCards = ParseData.ParsePackages(data, rest);
+                if (IsAdmin(data))
+                {
+                    var fiveCards = ParseData.ParsePackages(data, rest);
+                }
+                else
+                {
+                    Console.WriteLine("[!] User is not authorized.");
+                }
                 break;
             case "/transactions/packages":
-                Console.WriteLine("Transactions branch");
+                if (IsAuthorized(data))
+                {
+                    DBHandler.AcquirePackage(data);
+                }
+                else
+                {
+                    Console.WriteLine("[!] User is not authorized.");
+                }
+                break;
+            case "/cards":
+                DBHandler.DisplayCards(data);
+                break;
+            case "/deck":
+                if (data["Method"] == "GET")
+                {
+                    DBHandler.DisplayCards(data);
+                }
+                else if (data["Method"] == "PUT")
+                {
+                    var card_ids = ParseData.ParseCard(data, rest);
+                    DBHandler.ConfigureDeck(data, card_ids);
+                }
+                break;
+            case "/deck?format=plain":
+                Console.WriteLine("[%] Deck formatting branch [NOT IMPLEMENTED]");
+                break;
+            case "/stats":
+                Console.WriteLine("Stats branch");
+                break;
+            case "/score":
+                Console.WriteLine("Score branch");
+                break;
+            case "/battles":
+                Console.WriteLine("Battles branch");
+                break;
+            case "/tradings":
+                Console.WriteLine("Tradings branch");
                 break;
             default:
                 throw new Exception("Invalid branch");
