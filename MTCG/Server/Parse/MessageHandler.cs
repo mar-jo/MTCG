@@ -1,6 +1,8 @@
-﻿using MTCG.Database;
+﻿using System.Net;
+using MTCG.Database;
+using MTCG.Server.Responses;
 
-namespace MTCG.Server;
+namespace MTCG.Server.Parse;
 
 public static class MessageHandler
 {
@@ -83,77 +85,76 @@ public static class MessageHandler
         return message;
     }
 
-    public static void BranchHandler(Dictionary<string, string> data, string rest)
+    public static string BranchHandler(Dictionary<string, string> data, string rest)
     {
         //Dictionary<string, string> combined = new Dictionary<string, string>();
 
-        if (data["Path"] == $"/users/{GetUsernameOutOfToken(data)}")
+        /*if (data["Path"] == $"/users/{GetUsernameOutOfToken(data)}")
         {
 
-        }
-        
+        }*/
+
         switch (data["Path"])
         {
             case "/users":
                 _combined = ParseData.ParseUser(data, rest);
-                break;
-            case "/sessions":
-                _combined = ParseData.ParseUser(data, rest);
-                
-                //TODO: Add handler to check whether login was successful or not
-                CreateToken(_combined);
-                break;
-            case "/packages":
-                if (IsAdmin(data))
-                {
-                    var fiveCards = ParseData.ParsePackages(data, rest);
-                }
-                else
-                {
-                    Console.WriteLine("[!] User is not authorized.");
-                }
-                break;
-            case "/transactions/packages":
-                if (IsAuthorized(data))
-                {
-                    DBHandler.AcquirePackage(data);
-                }
-                else
-                {
-                    Console.WriteLine("[!] User is not authorized.");
-                }
-                break;
-            case "/cards":
-                DBHandler.DisplayCards(data);
-                break;
-            case "/deck":
-                if (data["Method"] == "GET")
-                {
-                    DBHandler.DisplayCards(data);
-                }
-                else if (data["Method"] == "PUT")
-                {
-                    var card_ids = ParseData.ParseCard(data, rest);
-                    DBHandler.ConfigureDeck(data, card_ids);
-                }
-                break;
-            case "/deck?format=plain":
-                Console.WriteLine("[%] Deck formatting branch [NOT IMPLEMENTED]");
-                break;
-            case "/stats":
-                Console.WriteLine("Stats branch");
-                break;
-            case "/score":
-                Console.WriteLine("Score branch");
-                break;
-            case "/battles":
-                Console.WriteLine("Battles branch");
-                break;
-            case "/tradings":
-                Console.WriteLine("Tradings branch");
-                break;
+                var httpCode = DBHandler.CreateUser(_combined);
+                return ResponseHandler.HttpResponseCodeHandler(httpCode, _combined);
+            //case "/sessions":
+            //    _combined = ParseData.ParseUser(data, rest);
+            //
+            //    //TODO: Add handler to check whether login was successful or not
+            //    CreateToken(_combined);
+            //    break;
+            //case "/packages":
+            //    if (IsAdmin(data))
+            //    {
+            //        var fiveCards = ParseData.ParsePackages(data, rest);
+            //    }
+            //    else
+            //    {
+            //        Console.WriteLine("[!] User is not authorized.");
+            //    }
+            //    break;
+            //case "/transactions/packages":
+            //    if (IsAuthorized(data))
+            //    {
+            //        DBHandler.AcquirePackage(data);
+            //    }
+            //    else
+            //    {
+            //        Console.WriteLine("[!] User is not authorized.");
+            //    }
+            //    break;
+            //case "/cards":
+            //    DBHandler.DisplayCards(data);
+            //    break;
+            //case "/deck":
+            //    if (data["Method"] == "GET")
+            //    {
+            //        DBHandler.DisplayCards(data);
+            //    }
+            //    else if (data["Method"] == "PUT")
+            //    {
+            //        var card_ids = ParseData.ParseCard(data, rest);
+            //        DBHandler.ConfigureDeck(data, card_ids);
+            //    }
+            //    break;
+            //case "/stats":
+            //    Console.WriteLine("Stats branch");
+            //    break;
+            //case "/score":
+            //    Console.WriteLine("Score branch");
+            //    break;
+            //case "/battles":
+            //    Console.WriteLine("Battles branch");
+            //    break;
+            //case "/tradings":
+            //    Console.WriteLine("Tradings branch");
+            //    break;
             default:
-                throw new Exception("Invalid branch");
+                HttpResponseMessage code = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+                return ResponseHandler.HttpResponseCodeHandler(code, data);
         }
     }
 }

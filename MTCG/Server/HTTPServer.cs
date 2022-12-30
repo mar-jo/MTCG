@@ -3,14 +3,17 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using MTCG.Server;
+using MTCG.Server.Parse;
+using MTCG.Server.Responses;
 
 class HTTPServer
 {
     public static void Server()
     {
         TcpListener? server = null;
-        
+        string message = "";
+
+
         try
         {
             Int32 port = 10001;
@@ -42,7 +45,7 @@ class HTTPServer
                         Console.WriteLine($"\n[!] RECEIVED :\n {data}");
 
                         branch = MessageHandler.GetFirstLine(data);
-                        MessageHandler.BranchHandler(branch, data);
+                        message = MessageHandler.BranchHandler(branch, data);
                         
                         // TODO: Replace this shit with something more elegant
                         if (i is not 0 and < 256)
@@ -51,7 +54,7 @@ class HTTPServer
                         }
                     }
 
-                    var message = Response.FormulateResponse(branch);
+                    //var message = Response.FormulateResponse(branch);
                     var encodedMsg = System.Text.Encoding.ASCII.GetBytes(message);
                     stream.Write(encodedMsg, 0, encodedMsg.Length);
 

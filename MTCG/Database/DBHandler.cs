@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Npgsql;
@@ -16,12 +17,12 @@ public class DBHandler
         try
         {
             _conn = new NpgsqlConnection(ConnString);
-            Console.Out.WriteLine("Opening connection...");
+            Console.Out.WriteLine("[DB] Opening connection...");
             _conn.Open();
         }
         catch (NpgsqlException ex)
         {
-            Console.WriteLine("An error occurred: " + ex.Message);
+            Console.WriteLine("[DB] An error occurred: " + ex.Message);
         }
     }
 
@@ -30,11 +31,38 @@ public class DBHandler
         try
         {
             _conn.Close();
+            Console.Out.WriteLine("[DB] Connection closed...");
         }
         catch (NpgsqlException ex)
         {
-            Console.WriteLine("An error occurred: " + ex.Message);
+            Console.WriteLine("[DB] An error occurred: " + ex.Message);
         }
+    }
+
+    public static HttpResponseMessage CreateUser(Dictionary<string, string> user)
+    {
+        // TODO: Return 201 if successful and 409 if not.
+        ConnectDB();
+
+        var cmd = new NpgsqlCommand("INSERT INTO users (username, password) VALUES (@username, @password)", _conn);
+        cmd.Parameters.AddWithValue("username", user["Username"]);
+        cmd.Parameters.AddWithValue("password", user["Password"]);
+        try
+        {
+            cmd.ExecuteNonQuery();
+            Console.WriteLine("[+] User created successfully!");
+            return new HttpResponseMessage(HttpStatusCode.Created);
+        }
+        catch (NpgsqlException ex)
+        {
+            Console.WriteLine("[-] An error occurred " + ex.Message);
+            return new HttpResponseMessage(HttpStatusCode.Conflict);
+        }
+        finally
+        {
+            CloseDB();
+        }
+
     }
 
     public static void AcquirePackage(Dictionary<string, string> user)

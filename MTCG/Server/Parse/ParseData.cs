@@ -2,7 +2,7 @@
 using MTCG.Essentials;
 using Newtonsoft.Json;
 
-namespace MTCG.Server;
+namespace MTCG.Server.Parse;
 
 public static class ParseData
 {
