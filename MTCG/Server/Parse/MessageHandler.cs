@@ -28,8 +28,6 @@ public static class MessageHandler
 
     private static string GetUsernameOutOfToken(Dictionary<string, string> data)
     {
-        // in the library, "Authorization" has a string that looks something like "Basic kienboec-mtcgtoken", get the "kienboec" out of it, save it in a string and return it.
-
         var splitInTwo = data["Authorization"].Split('-')[0];
         var username = splitInTwo.Split(' ')[1];
 
@@ -38,7 +36,7 @@ public static class MessageHandler
         return username;
     }
 
-    private static bool IsAuthorized(Dictionary<string, string> data)
+    public static bool IsAuthorized(Dictionary<string, string> data)
     {
         if (data["Authorization"] == "None")
         {
@@ -48,7 +46,7 @@ public static class MessageHandler
         return true;
     }
 
-    private static bool IsAdmin(Dictionary<string, string> data)
+    public static bool IsAdmin(Dictionary<string, string> data)
     {
         if (data["Authorization"] == "Basic admin-mtcgToken")
         {
@@ -56,14 +54,6 @@ public static class MessageHandler
         }
 
         return false;
-    }
-
-    private static void CreateToken(Dictionary<string, string> data)
-    {
-        if (data["Authorization"] == "None")
-        {
-            data["Authorization"] = data["Username"] + "-mtcgToken";
-        }
     }
 
     public static Dictionary<string, string> GetFirstLine(string data)
@@ -87,7 +77,7 @@ public static class MessageHandler
 
     public static string BranchHandler(Dictionary<string, string> data, string rest)
     {
-        //Dictionary<string, string> combined = new Dictionary<string, string>();
+        HttpResponseMessage httpCode;
 
         /*if (data["Path"] == $"/users/{GetUsernameOutOfToken(data)}")
         {
@@ -98,24 +88,19 @@ public static class MessageHandler
         {
             case "/users":
                 _combined = ParseData.ParseUser(data, rest);
-                var httpCode = DBHandler.CreateUser(_combined);
+                httpCode = DBHandler.CreateUser(_combined);
+                
                 return ResponseHandler.HttpResponseCodeHandler(httpCode, _combined);
-            //case "/sessions":
-            //    _combined = ParseData.ParseUser(data, rest);
-            //
-            //    //TODO: Add handler to check whether login was successful or not
-            //    CreateToken(_combined);
-            //    break;
-            //case "/packages":
-            //    if (IsAdmin(data))
-            //    {
-            //        var fiveCards = ParseData.ParsePackages(data, rest);
-            //    }
-            //    else
-            //    {
-            //        Console.WriteLine("[!] User is not authorized.");
-            //    }
-            //    break;
+            case "/sessions":
+                _combined = ParseData.ParseUser(data, rest);
+                httpCode = DBHandler.LoginUser(_combined);
+
+                return ResponseHandler.HttpResponseCodeHandler(httpCode, _combined);
+            case "/packages":
+                var fiveCards = ParseData.ParsePackages(data, rest);
+                httpCode = DBHandler.CreatePackages(fiveCards, data);
+
+                return ResponseHandler.HttpResponseCodeHandler(httpCode, _combined);
             //case "/transactions/packages":
             //    if (IsAuthorized(data))
             //    {
