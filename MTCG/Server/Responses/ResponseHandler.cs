@@ -12,22 +12,25 @@ public class ResponseHandler
             data["Authorization"] = "Basic " + data["Username"] + "-mtcgToken";
         }
     }
-    
-    public static string HttpResponseCodeHandler(HttpResponseMessage code, Dictionary<string, string> data)
+
+    public static string HttpResponseCodeHandler(int statusCode, Dictionary<string, string> data)
     {
-        switch (code.StatusCode)
+        switch (statusCode)
         {
-            case HttpStatusCode.Created:
-                return Response.FormulateResponseUserCreation(code, data);
-            case HttpStatusCode.Conflict:
-                return Response.FormulateResponseUserCreation(code, data);
-            case HttpStatusCode.OK:
+            case 201:
+                return Response.FormulateResponseCreation(statusCode, data);
+            case 409:
+                return Response.FormulateResponseCreation(statusCode, data);
+            case 200:
                 CreateToken(data);
-                return Response.FormulateResponseUserLogin(code, data);
-            case HttpStatusCode.Unauthorized:
-                return Response.FormulateResponseUserLogin(code, data);
+                return Response.FormulateResponseUserData(statusCode, data);
+            case 401:
+                return Response.FormulateResponseUserData(statusCode, data);
+            case 403:
+                return Response.FormulateResponseNoAccess(statusCode, data);
             default:
-                return Response.FormulateResponseDefault(code, data);
+                return Response.FormulateResponseDefault(statusCode, data);
         }
     }
+
 }

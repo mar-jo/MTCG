@@ -13,7 +13,6 @@ class HTTPServer
         TcpListener? server = null;
         string message = "";
 
-
         try
         {
             Int32 port = 10001;
@@ -48,7 +47,7 @@ class HTTPServer
                         message = MessageHandler.BranchHandler(branch, data);
                         
                         // TODO: Replace this shit with something more elegant
-                        if (i is not 0 and < 256)
+                        if (i is not 0 and < 1024)
                         {
                             break;
                         }

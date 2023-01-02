@@ -77,7 +77,7 @@ public static class MessageHandler
 
     public static string BranchHandler(Dictionary<string, string> data, string rest)
     {
-        HttpResponseMessage httpCode;
+        int httpCode;
 
         /*if (data["Path"] == $"/users/{GetUsernameOutOfToken(data)}")
         {
@@ -100,7 +100,7 @@ public static class MessageHandler
                 var fiveCards = ParseData.ParsePackages(data, rest);
                 httpCode = DBHandler.CreatePackages(fiveCards, data);
 
-                return ResponseHandler.HttpResponseCodeHandler(httpCode, _combined);
+                return ResponseHandler.HttpResponseCodeHandler(httpCode, data);
             //case "/transactions/packages":
             //    if (IsAuthorized(data))
             //    {
@@ -138,7 +138,7 @@ public static class MessageHandler
             //    Console.WriteLine("Tradings branch");
             //    break;
             default:
-                HttpResponseMessage code = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+                int code = 500;
                 return ResponseHandler.HttpResponseCodeHandler(code, data);
         }
     }
