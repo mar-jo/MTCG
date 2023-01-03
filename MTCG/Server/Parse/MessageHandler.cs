@@ -26,16 +26,6 @@ public static class MessageHandler
         }
     }
 
-    private static string GetUsernameOutOfToken(Dictionary<string, string> data)
-    {
-        var splitInTwo = data["Authorization"].Split('-')[0];
-        var username = splitInTwo.Split(' ')[1];
-
-        Console.WriteLine("[!] Username: " + username);
-
-        return username;
-    }
-
     public static bool IsAuthorized(Dictionary<string, string> data)
     {
         if (data["Authorization"] == "None")
@@ -101,16 +91,10 @@ public static class MessageHandler
                 httpCode = DBHandler.CreatePackages(fiveCards, data);
 
                 return ResponseHandler.HttpResponseCodeHandler(httpCode, data);
-            //case "/transactions/packages":
-            //    if (IsAuthorized(data))
-            //    {
-            //        DBHandler.AcquirePackage(data);
-            //    }
-            //    else
-            //    {
-            //        Console.WriteLine("[!] User is not authorized.");
-            //    }
-            //    break;
+            case "/transactions/packages":
+                httpCode = DBHandler.AcquirePackage(data);
+
+                return ResponseHandler.HttpResponseCodeHandler(httpCode, data);
             //case "/cards":
             //    DBHandler.DisplayCards(data);
             //    break;

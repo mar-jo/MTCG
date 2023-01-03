@@ -4,7 +4,6 @@ namespace MTCG.Database.Hashing;
 
 public static class PasswordHasher
 {
-
     public static (string, string) Hash(string password)
     {
         byte[] salt;
@@ -35,5 +34,4 @@ public static class PasswordHasher
 
         return true;
     }
-
 }

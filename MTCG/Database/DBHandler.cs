@@ -178,44 +178,94 @@ public class DBHandler
         }
     }
 
-    //public static int AcquirePackage(Dictionary<string, string> user)
-    //{
-    //    if (!MessageHandler.IsAuthorized(user))
-    //    {
-    //        Console.WriteLine("[-] Invalid access-token...");
-    //        return new HttpResponseMessage(HttpStatusCode.Unauthorized);
-    //    }
-    //    else
-    //    {
-    //        // Access users table and check if coins are below 5, if so return 400
-    //
-    //        ConnectDB();
-    //        var cmd = new NpgsqlCommand("SELECT coins FROM users WHERE username = @username", _conn);
-    //        cmd.Parameters.AddWithValue("username", user["Username"]);
-    //        cmd.Prepare();
-    //        var reader = cmd.ExecuteReader();
-    //        int coins = 0;
-    //
-    //        while (reader.Read())
-    //        {
-    //            coins = (int)reader["coins"];
-    //        }
-    //
-    //        if (coins < 5)
-    //        {
-    //            Console.WriteLine("[-] Not enough coins left in wallet...");
-    //            CloseDB();
-    //            return new HttpResponseMessage(HttpStatusCode.Forbidden);
-    //        }
-    //
-    //        cmd = new NpgsqlCommand("UPDATE users SET coins = coins - 5 WHERE username = @username", _conn);
-    //        cmd.Parameters.AddWithValue("username", user["Username"]);
-    //        cmd.Prepare();
-    //        cmd.ExecuteNonQuery();
-    //
-    //        
-    //    }
-    //}
+    public static int AcquirePackage(Dictionary<string, string> user)
+    {
+        if (!MessageHandler.IsAuthorized(user))
+        {
+            Console.WriteLine("[-] Invalid access-token...");
+            return 401;
+        }
+        else
+        {
+            var username = ParseData.GetUsernameOutOfToken(user);
+
+            ConnectDB();
+            var cmd = new NpgsqlCommand("SELECT coins FROM users WHERE username = @username", _conn);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Prepare();
+            var reader = cmd.ExecuteReader();
+            int coins = 0;
+    
+            while (reader.Read())
+            {
+                coins = (int)reader["coins"];
+            }
+    
+            if (coins < 5)
+            {
+                Console.WriteLine("[-] User has less than 5 Coins...");
+                reader.Close();
+                CloseDB();
+                return 403;
+            }
+
+            reader.Close();
+
+            cmd = new NpgsqlCommand("SELECT * FROM packages LIMIT 1", _conn);
+            cmd.Prepare();
+            reader = cmd.ExecuteReader();
+            int? packageId = null;
+            string[] cardIds = new string[5];
+
+            while (reader.Read())
+            {
+                var packageIdString = reader["packageid"].ToString();
+                packageId = int.Parse(packageIdString);
+
+                cardIds[0] = (string)reader["card1"];
+                cardIds[1] = (string)reader["card2"];
+                cardIds[2] = (string)reader["card3"];
+                cardIds[3] = (string)reader["card4"];
+                cardIds[4] = (string)reader["card5"];
+
+                break;
+            }
+
+            if (packageId == null)
+            {
+                Console.WriteLine("[-] No packages available...");
+                reader.Close();
+                CloseDB();
+                return 404;
+            }
+            
+            reader.Close();
+
+            cmd = new NpgsqlCommand("UPDATE users SET coins = coins - 5 WHERE username = @username", _conn);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Prepare();
+            cmd.ExecuteNonQuery();
+
+            cmd = new NpgsqlCommand("DELETE FROM packages WHERE packageid = @packageid", _conn);
+            cmd.Parameters.AddWithValue("packageid", packageId);
+            cmd.Prepare();
+            cmd.ExecuteNonQuery();
+
+            // Add the cards to the users inventory
+            foreach (var cardId in cardIds)
+            {
+                cmd = new NpgsqlCommand("INSERT INTO stack (userid, cardid) VALUES (@username, @cardid)", _conn);
+                cmd.Parameters.AddWithValue("username", username);
+                cmd.Parameters.AddWithValue("cardid", cardId);
+                cmd.Prepare();
+                cmd.ExecuteNonQuery();
+            }
+
+            Console.WriteLine("[+] Package acquired successfully!");
+            CloseDB();
+            return 200;
+        }
+    }
 
     public static void DisplayCards(Dictionary<string, string> user)
     {

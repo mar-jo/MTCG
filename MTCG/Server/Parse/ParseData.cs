@@ -6,6 +6,16 @@ namespace MTCG.Server.Parse;
 
 public static class ParseData
 {
+    public static string GetUsernameOutOfToken(Dictionary<string, string> data)
+    {
+        var splitInTwo = data["Authorization"].Split('-')[0];
+        var username = splitInTwo.Split(' ')[1];
+
+        Console.WriteLine("[!] Username: " + username);
+
+        return username;
+    }
+    
     public static Dictionary<string, string> ParseUser(Dictionary<string, string> dict, string data)
     {
         var lines = data.Split(Environment.NewLine);

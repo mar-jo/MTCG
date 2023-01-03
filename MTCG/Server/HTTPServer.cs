@@ -45,17 +45,14 @@ class HTTPServer
 
                         branch = MessageHandler.GetFirstLine(data);
                         message = MessageHandler.BranchHandler(branch, data);
-                        
-                        // TODO: Replace this shit with something more elegant
-                        if (i is not 0 and < 1024)
-                        {
-                            break;
-                        }
+
+                        var encodedMsg = System.Text.Encoding.ASCII.GetBytes(message);
+                        stream.Write(encodedMsg, 0, encodedMsg.Length);
                     }
 
                     //var message = Response.FormulateResponse(branch);
-                    var encodedMsg = System.Text.Encoding.ASCII.GetBytes(message);
-                    stream.Write(encodedMsg, 0, encodedMsg.Length);
+                    //var encodedMsg = System.Text.Encoding.ASCII.GetBytes(message);
+                    //stream.Write(encodedMsg, 0, encodedMsg.Length);
 
                     client.Close();
                 });
