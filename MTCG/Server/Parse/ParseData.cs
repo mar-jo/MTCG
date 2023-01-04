@@ -38,7 +38,19 @@ public static class ParseData
     public static string[] ParseCard(Dictionary<string, string> dict, string data)
     {
         var lines = data.Split(Environment.NewLine);
-        var card_ids = new string[4];
+
+        var size = 0;
+        foreach(var line in lines)
+        {
+            if (line.Contains(","))
+            {
+                size++;
+            }
+        }
+
+        size++;
+
+        var card_ids = new string[size];
 
         foreach (var line in lines)
         {
@@ -46,12 +58,10 @@ public static class ParseData
             {
                 dynamic? cards = JsonConvert.DeserializeObject<string[]>(line);
 
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < size; i++)
                 {
                     card_ids[i] = cards?[i];
                 }
-
-                Console.WriteLine($"[!] IDs: {card_ids[0]}, {card_ids[1]}, {card_ids[2]}, {card_ids[3]}");
             }
         }
 

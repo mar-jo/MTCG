@@ -95,20 +95,29 @@ public static class MessageHandler
                 httpCode = DBHandler.AcquirePackage(data);
 
                 return ResponseHandler.HttpResponseCodeHandler(httpCode, data);
-            //case "/cards":
-            //    DBHandler.DisplayCards(data);
-            //    break;
-            //case "/deck":
-            //    if (data["Method"] == "GET")
-            //    {
-            //        DBHandler.DisplayCards(data);
-            //    }
-            //    else if (data["Method"] == "PUT")
-            //    {
-            //        var card_ids = ParseData.ParseCard(data, rest);
-            //        DBHandler.ConfigureDeck(data, card_ids);
-            //    }
-            //    break;
+            case "/cards":
+                var (statusCode, cards) = DBHandler.DisplayCards(data);
+
+                return ResponseHandler.CreateResponseCards(statusCode, cards, data);
+            case "/deck":
+            {
+                if (data["Method"] == "GET")
+                {
+                    var(status, card) =  DBHandler.DisplayCards(data);
+
+                    return ResponseHandler.CreateResponseCards(status, card, data);
+                }
+                else if (data["Method"] == "PUT")
+                {
+                    var card_ids = ParseData.ParseCard(data, rest);
+                    httpCode = DBHandler.ConfigureDeck(data, card_ids);
+
+                    return ResponseHandler.HttpResponseCodeHandler(httpCode, data);
+                }
+
+                return ResponseHandler.HttpResponseCodeHandler(500, data);
+            }
+            //case $"/users/{GetUsernameOutOfToken(data)}":
             //case "/stats":
             //    Console.WriteLine("Stats branch");
             //    break;

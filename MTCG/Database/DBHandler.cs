@@ -251,7 +251,6 @@ public class DBHandler
             cmd.Prepare();
             cmd.ExecuteNonQuery();
 
-            // Add the cards to the users inventory
             foreach (var cardId in cardIds)
             {
                 cmd = new NpgsqlCommand("INSERT INTO stack (userid, cardid) VALUES (@username, @cardid)", _conn);
@@ -267,41 +266,204 @@ public class DBHandler
         }
     }
 
-    public static void DisplayCards(Dictionary<string, string> user)
+    public static (int, Card[]) DisplayCards(Dictionary<string, string> user)
     {
-        try
+        if (!MessageHandler.IsAuthorized(user))
         {
-            if (user["Authorization"] == "None")
+            Console.WriteLine("[-] Invalid access-token...");
+            return (401, null)!;
+        }
+        else
+        {
+            var username = ParseData.GetUsernameOutOfToken(user);
+            ConnectDB();
+
+            NpgsqlCommand cmd;
+
+            if (user["Path"] == "/deck" && user["Method"] == "GET")
             {
-                throw new Exception("[%] Invalid Authorization!");
+                cmd = new NpgsqlCommand("SELECT COUNT(*) FROM deck WHERE username = @username", _conn);
             }
             else
             {
-                Console.WriteLine("[%] Not implemented yet!");
+                cmd = new NpgsqlCommand("SELECT COUNT(*) FROM stack WHERE userid = @username", _conn);
             }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine($"{e.Data}");
+
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Prepare();
+
+            var reader = cmd.ExecuteReader();
+            int count = 0;
+
+            while (reader.Read())
+            {
+                var countString = reader["count"].ToString();
+                count = int.Parse(countString);
+            }
+
+            reader.Close();
+
+            if (count == 0)
+            {
+                Console.WriteLine("[-] User has no cards...");
+                CloseDB();
+                return (203, null)!;
+            }
+
+            Card[] cards;
+            
+            if (user["Path"] == "/deck" && user["Method"] == "GET")
+            {
+                cards = new Card[4];
+
+                for (int j = 0; j < 4; j++)
+                {
+                    cards[j] = new Card();
+                }
+            }
+            else
+            {
+                cards = new Card[count];
+
+                for (int j = 0; j < count; j++)
+                {
+                    cards[j] = new Card();
+                }
+            }
+
+            if (user["Path"] == "/deck" && user["Method"] == "GET")
+            {
+                cmd = new NpgsqlCommand("SELECT * FROM deck WHERE username = @username", _conn);
+                cmd.Parameters.AddWithValue("username", username);
+                cmd.Prepare();
+
+                reader = cmd.ExecuteReader();
+
+                string[] cardIds = new string[4];
+
+                while (reader.Read())
+                {
+                    cardIds[0] = (string)reader["card1"];
+                    cardIds[1] = (string)reader["card2"];
+                    cardIds[2] = (string)reader["card3"];
+                    cardIds[3] = (string)reader["card4"];
+                }
+
+                reader.Close();
+
+                for (int i = 0; i < 4; i++)
+                {
+                    cmd = new NpgsqlCommand("SELECT * FROM cards WHERE cardid = @cardid", _conn);
+                    cmd.Parameters.AddWithValue("cardid", cardIds[i]);
+                    cmd.Prepare();
+
+                    reader = cmd.ExecuteReader();
+
+                    while (reader.Read())
+                    {
+                        cards[i].Id = (string)reader["cardid"];
+                        cards[i].Name = (string)reader["name"];
+                        cards[i].Damage = (int)reader["damage"];
+                    }
+
+                    reader.Close();
+                }
+            }
+            else
+            {
+                cmd = new NpgsqlCommand("SELECT c.cardid, c.name, c.damage FROM cards AS c INNER JOIN stack AS s ON c.cardid = s.cardid WHERE s.userid = @username", _conn);
+
+                cmd.Parameters.AddWithValue("username", username);
+                cmd.Prepare();
+                reader = cmd.ExecuteReader();
+
+                int i = 0;
+                while (reader.Read())
+                {
+                    string cardid = reader.GetString(0);
+                    string name = reader.GetString(1);
+                    int damage = reader.GetInt32(2);
+
+                    cards[i].Id = cardid;
+                    cards[i].Name = name;
+                    cards[i].Damage = damage;
+
+                    i++;
+                }
+
+                reader.Close();
+            }
+
+            CloseDB();
+            return (200, cards);
         }
     }
 
-    public static void ConfigureDeck(Dictionary<string, string> user, string[] ids)
+    public static int ConfigureDeck(Dictionary<string, string> user, string[] ids)
     {
-        try
+        if (!MessageHandler.IsAuthorized(user))
         {
-            if (user["Authorization"] == "None")
+            Console.WriteLine("[-] Invalid access-token...");
+            return 401;
+        }
+        else
+        {
+            if (ids.Length != 4)
             {
-                throw new Exception("[%] Invalid Authorization!");
+                Console.WriteLine("[-] Invalid number of cards...");
+                return 400;
+            }
+
+            var username = ParseData.GetUsernameOutOfToken(user);
+            ConnectDB();
+
+            var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM deck WHERE username = @username", _conn);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Prepare();
+
+            var reader = cmd.ExecuteReader();
+            int count = 0;
+
+            while (reader.Read())
+            {
+                var countString = reader["count"].ToString();
+                count = int.Parse(countString);
+            }
+
+            reader.Close();
+
+            if (count == 0)
+            {
+                try
+                {
+                    cmd = new NpgsqlCommand(
+                        "INSERT INTO deck (username, card1, card2, card3, card4) VALUES (@username, @card1, @card2, @card3, @card4)",
+                        _conn);
+                    cmd.Parameters.AddWithValue("username", username);
+                    cmd.Parameters.AddWithValue("card1", ids[0]);
+                    cmd.Parameters.AddWithValue("card2", ids[1]);
+                    cmd.Parameters.AddWithValue("card3", ids[2]);
+                    cmd.Parameters.AddWithValue("card4", ids[3]);
+                    cmd.Prepare();
+                    cmd.ExecuteNonQuery();
+                }
+                catch (NpgsqlException ex)
+                {
+                    Console.WriteLine("[-] At least one card did not belong to the user : " + ex.Message);
+                    CloseDB();
+                    return 403;
+                }
             }
             else
             {
-                Console.WriteLine("[%] Not implemented yet!");
+                Console.WriteLine("[-] Deck already full...");
+                CloseDB();
+                return 409;
             }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine($"{e.Data}");
+
+            CloseDB();
+            Console.WriteLine("[+] Cards successfully added!");
+            return 200;
         }
     }
 }
