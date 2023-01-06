@@ -466,4 +466,130 @@ public class DBHandler
             return 200;
         }
     }
+
+    public static (int, string[]) DisplayUser(Dictionary<string, string> user)
+    {
+        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        {
+            Console.WriteLine("[-] Invalid access-token...");
+            return (401, null);
+        }
+        else if (!MessageHandler.CheckCredibility(user))
+        {
+            Console.WriteLine("[-] Invalid path...");
+            return (401, null);
+        }
+        else
+        {
+            var username = ParseData.GetUsernameOutOfToken(user);
+            ConnectDB();
+
+            var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM users WHERE username = @username", _conn);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Prepare();
+
+            var reader = cmd.ExecuteReader();
+            int count = 0;
+
+            while (reader.Read())
+            {
+                var countString = reader["count"].ToString();
+                count = int.Parse(countString);
+            }
+
+            reader.Close();
+
+            if (count == 0)
+            {
+                Console.WriteLine("[-] User does not exist...");
+                CloseDB();
+                return (404, null);
+            }
+
+            cmd = new NpgsqlCommand("SELECT * FROM users WHERE username = @username", _conn);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Prepare();
+
+            reader = cmd.ExecuteReader();
+            
+            var result = new string[3];
+            while (reader.Read())
+            {
+                result[0] = (string)reader["username"];
+                result[1] = reader["bio"] is DBNull ? "NULL" : (string)reader["bio"];
+                result[2] = reader["image"] is DBNull ? "NULL" : (string)reader["image"];
+            }
+
+            reader.Close();
+            CloseDB();
+            Console.WriteLine("[+] Data retrieved!");
+            return (200, result);
+        }
+    }
+
+    public static int InsertUserData(Dictionary<string, string> user, string[] data)
+    {
+        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        {
+            Console.WriteLine("[-] Invalid access-token...");
+            return 401;
+        }
+        else if (!MessageHandler.CheckCredibility(user))
+        {
+            Console.WriteLine("[-] Invalid path...");
+            return 401;
+        }
+        else
+        {
+            var username = ParseData.GetUsernameOutOfToken(user);
+            ConnectDB();
+
+            var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM users WHERE username = @username", _conn);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Prepare();
+
+            var reader = cmd.ExecuteReader();
+            int count = 0;
+
+            while (reader.Read())
+            {
+                var countString = reader["count"].ToString();
+                count = int.Parse(countString);
+            }
+
+            reader.Close();
+
+            if (count == 0)
+            {
+                Console.WriteLine("[-] User does not exist...");
+                CloseDB();
+                return 404;
+            }
+
+            cmd = new NpgsqlCommand("UPDATE deck SET username = @username WHERE username = @oldUsername", _conn);
+            cmd.Parameters.AddWithValue("username", data[0]);
+            cmd.Parameters.AddWithValue("oldUsername", username);
+            cmd.Prepare();
+            cmd.ExecuteNonQuery();
+
+            cmd = new NpgsqlCommand("UPDATE stack SET userid = @username WHERE userid = @oldUsername", _conn);
+            cmd.Parameters.AddWithValue("username", data[0]);
+            cmd.Parameters.AddWithValue("oldUsername", username);
+            cmd.Prepare();
+            cmd.ExecuteNonQuery();
+
+            cmd = new NpgsqlCommand("UPDATE users SET bio = @bio, image = @image, username = @username WHERE username = @user", _conn);
+            cmd.Parameters.AddWithValue("user", username);
+            cmd.Parameters.AddWithValue("username", data[0]);
+            cmd.Parameters.AddWithValue("bio", data[1]);
+            cmd.Parameters.AddWithValue("image", data[2]);
+            cmd.Prepare();
+            cmd.ExecuteNonQuery();
+
+            CloseDB();
+            user["Authorization"] = "Basic " + data[0] + "-mtcgToken";
+            Console.WriteLine("[+] Data updated!");
+            return 200;
+        }
+    }
 }

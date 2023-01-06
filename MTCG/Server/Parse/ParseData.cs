@@ -35,7 +35,26 @@ public static class ParseData
         return dict;
     }
 
-    public static string[] ParseCard(Dictionary<string, string> dict, string data)
+    public static string[] ParseUserData(string data)
+    {
+        var lines = data.Split(Environment.NewLine);
+        var userData = new string[3];
+
+        foreach (var line in lines)
+        {
+            if (line.StartsWith("{"))
+            {
+                dynamic? user = JsonConvert.DeserializeObject<User>(line);
+                userData[0] = user?.Username!;
+                userData[1] = user?.Bio!;
+                userData[2] = user?.Image!;
+            }
+        }
+
+        return userData;
+    }
+
+    public static string[] ParseCard(string data)
     {
         var lines = data.Split(Environment.NewLine);
 
@@ -68,7 +87,7 @@ public static class ParseData
         return card_ids;
     }
 
-    public static Card[] ParsePackages(Dictionary<string, string> dict, string data)
+    public static Card[] ParsePackages(string data)
     {
         var lines = data.Split(Environment.NewLine);
         int cardCount = 1, packageCount = 0;

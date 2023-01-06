@@ -45,7 +45,11 @@ public class ResponseHandler
                     }
                     else if (data["Path"].StartsWith("/deck"))
                     {
-                        body = "[] \t\r\nThe deck has been successfully configured!\n";
+                        body = "[] The deck has been successfully configured!\n";
+                    }
+                    else if (data.ContainsKey("FullPath"))
+                    {
+                        body = "[] User successfully updated!\n";
                     }
                     else
                     {
@@ -106,8 +110,15 @@ public class ResponseHandler
                 }
             case 404:
                 {
-                    body = "[] No card package available for buying...\n";
-
+                    if (data.ContainsKey("FullPath"))
+                    {
+                        body = "[] User not found...\n";
+                    }
+                    else
+                    { 
+                        body = "[] No card package available for buying...\n";
+                    }
+                    
                     break;
                 }
             case 409:
@@ -124,11 +135,13 @@ public class ResponseHandler
                     {
                         body = "[] Deck was configured already...\n";
                     }
+                    
                     break;
                 }
             default:
                 {
                     body = "[] Internal server error.\n";
+                    
                     break;
                 }
         }
@@ -186,10 +199,52 @@ public class ResponseHandler
         return response;
     }
 
+    public static string CreateResponseUsers(int statusCode, string[] info, Dictionary<string, string> data)
+    {
+        string reasonPhrase = _reasonPhrases.ContainsKey(statusCode) ? _reasonPhrases[statusCode] : "";
+        string headerStuff = $"{data["HTTP"]} {statusCode} {reasonPhrase}" + Environment.NewLine;
+
+        int bodyLength = 0;
+        string body = "";
+
+        switch (statusCode)
+        {
+            case 200:
+            {
+                body += "[] Data retrieved successfully!\n\n" + $"{{ \"username\":\"{info[0]}\", \"bio\": \"{info[1]}\", \"image\": \"{info[2]}\" }}\n";
+                break;
+            }
+            case 401:
+            {
+                body = "[] Access token is missing or invalid...\n";
+                break;
+            }
+            case 404:
+            {
+                body = "[] User not found...\n";
+                break;
+            }
+            default:
+            {
+                body = "[] Internal server error.\n";
+                break;
+            }
+        }
+
+        bodyLength += body.Length;
+
+        headerStuff += $"Content-Length: {bodyLength}" + Environment.NewLine;
+        headerStuff += "Content-Type: text/html; charset=utf-8" + Environment.NewLine + "" + Environment.NewLine;
+
+        string response = headerStuff + body + Environment.NewLine + Environment.NewLine;
+
+        return response;
+    }
+
     public static string BuildCardResponse(string body, Card[] cards)
     {
         body = "[] Cards successfully fetched from DB!\n\n";
-        
+
         foreach (var card in cards)
         {
             body += $"{{ \"id\":\"{card.Id}\", \"name\": \"{card.Name}\", \"damage\": \"{card.Damage}\" }}\n";

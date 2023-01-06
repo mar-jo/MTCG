@@ -46,6 +46,18 @@ public static class MessageHandler
         return false;
     }
 
+    public static bool CheckCredibility(Dictionary<string, string> data)
+    {
+        var tokenName = ParseData.GetUsernameOutOfToken(data);
+
+        if (data["FullPath"].Contains(tokenName))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public static Dictionary<string, string> GetFirstLine(string data)
     {
         var message = new Dictionary<string, string>();
@@ -55,6 +67,13 @@ public static class MessageHandler
 
         message.Add("Method", firstLineParts[0]);
         message.Add("Path", firstLineParts[1]);
+        
+        if (message["Path"].StartsWith("/users/"))
+        {
+            message["Path"] = "/users/username";
+            message.Add("FullPath", firstLineParts[1]);
+        }
+
         message.Add("HTTP", firstLineParts[2]);
 
         CheckAuthorization(message, data);
@@ -69,11 +88,6 @@ public static class MessageHandler
     {
         int httpCode;
 
-        /*if (data["Path"] == $"/users/{GetUsernameOutOfToken(data)}")
-        {
-
-        }*/
-
         switch (data["Path"])
         {
             case "/users":
@@ -87,7 +101,7 @@ public static class MessageHandler
 
                 return ResponseHandler.HttpResponseCodeHandler(httpCode, _combined);
             case "/packages":
-                var fiveCards = ParseData.ParsePackages(data, rest);
+                var fiveCards = ParseData.ParsePackages(rest);
                 httpCode = DBHandler.CreatePackages(fiveCards, data);
 
                 return ResponseHandler.HttpResponseCodeHandler(httpCode, data);
@@ -109,7 +123,7 @@ public static class MessageHandler
                 }
                 else if (data["Method"] == "PUT")
                 {
-                    var card_ids = ParseData.ParseCard(data, rest);
+                    var card_ids = ParseData.ParseCard(rest);
                     httpCode = DBHandler.ConfigureDeck(data, card_ids);
 
                     return ResponseHandler.HttpResponseCodeHandler(httpCode, data);
@@ -117,7 +131,22 @@ public static class MessageHandler
 
                 return ResponseHandler.HttpResponseCodeHandler(500, data);
             }
-            //case $"/users/{GetUsernameOutOfToken(data)}":
+            case "/users/username":
+                if (data["Method"] == "GET")
+                {
+                    var(status, info) = DBHandler.DisplayUser(data);
+
+                    return ResponseHandler.CreateResponseUsers(status, info, data);
+                }
+                else if (data["Method"] == "PUT")
+                {
+                    var userData = ParseData.ParseUserData(rest);
+                    httpCode = DBHandler.InsertUserData(data, userData);
+
+                    return ResponseHandler.HttpResponseCodeHandler(httpCode, data);
+                }
+
+                return ResponseHandler.HttpResponseCodeHandler(500, data);
             //case "/stats":
             //    Console.WriteLine("Stats branch");
             //    break;
