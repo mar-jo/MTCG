@@ -147,12 +147,14 @@ public static class MessageHandler
                 }
 
                 return ResponseHandler.HttpResponseCodeHandler(500, data);
-            //case "/stats":
-            //    Console.WriteLine("Stats branch");
-            //    break;
-            //case "/score":
-            //    Console.WriteLine("Score branch");
-            //    break;
+            
+            case "/stats":
+                var (http, stats) = DBHandler.DisplayStatistics(data);
+
+                return ResponseHandler.CreateResponseUsers(http, stats, data);
+            case "/score":
+                Console.WriteLine("Score branch");
+                break;
             //case "/battles":
             //    Console.WriteLine("Battles branch");
             //    break;

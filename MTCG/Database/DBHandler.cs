@@ -8,6 +8,7 @@ using MTCG.Cards;
 using MTCG.Database.Hashing;
 using MTCG.Server.Parse;
 using Npgsql;
+using NpgsqlTypes;
 
 namespace MTCG.Database;
 
@@ -472,12 +473,12 @@ public class DBHandler
         if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
         {
             Console.WriteLine("[-] Invalid access-token...");
-            return (401, null);
+            return (401, null!);
         }
         else if (!MessageHandler.CheckCredibility(user))
         {
             Console.WriteLine("[-] Invalid path...");
-            return (401, null);
+            return (401, null!);
         }
         else
         {
@@ -503,7 +504,7 @@ public class DBHandler
             {
                 Console.WriteLine("[-] User does not exist...");
                 CloseDB();
-                return (404, null);
+                return (404, null!);
             }
 
             cmd = new NpgsqlCommand("SELECT * FROM users WHERE username = @username", _conn);
@@ -515,7 +516,7 @@ public class DBHandler
             var result = new string[3];
             while (reader.Read())
             {
-                result[0] = (string)reader["username"];
+                result[0] = reader["name"] is DBNull ? "NULL" : (string)reader["name"];
                 result[1] = reader["bio"] is DBNull ? "NULL" : (string)reader["bio"];
                 result[2] = reader["image"] is DBNull ? "NULL" : (string)reader["image"];
             }
@@ -566,30 +567,110 @@ public class DBHandler
                 return 404;
             }
 
-            cmd = new NpgsqlCommand("UPDATE deck SET username = @username WHERE username = @oldUsername", _conn);
-            cmd.Parameters.AddWithValue("username", data[0]);
-            cmd.Parameters.AddWithValue("oldUsername", username);
-            cmd.Prepare();
-            cmd.ExecuteNonQuery();
-
-            cmd = new NpgsqlCommand("UPDATE stack SET userid = @username WHERE userid = @oldUsername", _conn);
-            cmd.Parameters.AddWithValue("username", data[0]);
-            cmd.Parameters.AddWithValue("oldUsername", username);
-            cmd.Prepare();
-            cmd.ExecuteNonQuery();
-
-            cmd = new NpgsqlCommand("UPDATE users SET bio = @bio, image = @image, username = @username WHERE username = @user", _conn);
-            cmd.Parameters.AddWithValue("user", username);
-            cmd.Parameters.AddWithValue("username", data[0]);
-            cmd.Parameters.AddWithValue("bio", data[1]);
-            cmd.Parameters.AddWithValue("image", data[2]);
-            cmd.Prepare();
-            cmd.ExecuteNonQuery();
+            try
+            {
+                cmd = new NpgsqlCommand("UPDATE users SET bio = @bio, image = @image, name = @name WHERE username = @username", _conn);
+                cmd.Parameters.AddWithValue("username", username);
+                cmd.Parameters.AddWithValue("name", data[0]);
+                cmd.Parameters.AddWithValue("bio", data[1]);
+                cmd.Parameters.AddWithValue("image", data[2]);
+                cmd.Prepare();
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine(ex.InnerException.Message);
+                }
+            }
 
             CloseDB();
-            user["Authorization"] = "Basic " + data[0] + "-mtcgToken";
             Console.WriteLine("[+] Data updated!");
             return 200;
+        }
+    }
+
+    public static (int, string?[]) DisplayStatistics(Dictionary<string, string> user)
+    {
+        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        {
+            Console.WriteLine("[-] Invalid access-token...");
+            return (401, null!);
+        }
+        else
+        {
+            var username = ParseData.GetUsernameOutOfToken(user);
+            
+            ConnectDB();
+            var cmd = new NpgsqlCommand("SELECT name FROM users WHERE username = @username", _conn);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Prepare();
+
+            var reader = cmd.ExecuteReader();
+            var result = new string?[4];
+
+            while (reader.Read())
+            {
+                result[0] = reader["name"].ToString();
+            }
+
+            reader.Close();
+
+            cmd = new NpgsqlCommand("SELECT elo, wins, losses FROM statistics WHERE userid = @username", _conn);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Prepare();
+
+            reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                result[1] = reader["elo"].ToString();
+                result[2] = reader["wins"].ToString();
+                result[3] = reader["losses"].ToString();
+            }
+
+            reader.Close();
+            CloseDB();
+            Console.WriteLine("[+] Data retrieved successfully!");
+            return (200, result);
+        }
+    }
+
+    public static (int, List<List<string?>>) DisplayScoreboard(Dictionary<string, string> user)
+    {
+        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        {
+            Console.WriteLine("[-] Invalid access-token...");
+            return (401, null!);
+        }
+        else
+        {
+            ConnectDB();
+
+            var cmd = new NpgsqlCommand("SELECT name, statistics.* FROM users INNER JOIN statistics ON users.username = statistics.userid SORT BY elo", _conn);
+            cmd.Prepare();
+
+            var reader = cmd.ExecuteReader();
+            var scoreBoard = new List<List<string?>>();
+
+            while (reader.Read())
+            {
+                var temp = new List<string?>
+                {
+                    reader["name"].ToString(),
+                    reader["elo"].ToString(),
+                    reader["wins"].ToString(),
+                    reader["losses"].ToString()
+                };
+                scoreBoard.Add(temp);
+            }
+
+            reader.Close();
+            CloseDB();
+            Console.WriteLine("[+] Data retrieved successfully!");
+            return (200, scoreBoard);
         }
     }
 }

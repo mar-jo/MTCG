@@ -45,12 +45,13 @@ public static class ParseData
             if (line.StartsWith("{"))
             {
                 dynamic? user = JsonConvert.DeserializeObject<User>(line);
-                userData[0] = user?.Username!;
+                userData[0] = user?.Username!; // Warum verwechselt es username mit name???
                 userData[1] = user?.Bio!;
                 userData[2] = user?.Image!;
             }
         }
 
+        Console.WriteLine($"[!] Name: {userData[0]}, Bio: {userData[1]}, Image: {userData[2]}");
         return userData;
     }
 
@@ -133,4 +134,5 @@ public static class ParseData
         return package;
     }
 
+    
 }

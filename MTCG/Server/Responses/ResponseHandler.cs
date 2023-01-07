@@ -199,7 +199,7 @@ public class ResponseHandler
         return response;
     }
 
-    public static string CreateResponseUsers(int statusCode, string[] info, Dictionary<string, string> data)
+    public static string CreateResponseUsers(int statusCode, string?[] info, Dictionary<string, string> data)
     {
         string reasonPhrase = _reasonPhrases.ContainsKey(statusCode) ? _reasonPhrases[statusCode] : "";
         string headerStuff = $"{data["HTTP"]} {statusCode} {reasonPhrase}" + Environment.NewLine;
@@ -211,8 +211,15 @@ public class ResponseHandler
         {
             case 200:
             {
-                body += "[] Data retrieved successfully!\n\n" + $"{{ \"username\":\"{info[0]}\", \"bio\": \"{info[1]}\", \"image\": \"{info[2]}\" }}\n";
-                break;
+                    if (data["Path"].StartsWith("/stats"))
+                    {
+                        body += "[] Data retrieved successfully!\n\n" + $"{{ \"name\":\"{info[0]}\", \"elo\": \"{info[1]}\", \"wins\": \"{info[2]}\", \"losses\": \"{info[3]}\" }}\n";
+                    }
+                    else
+                    {
+                        body += "[] Data retrieved successfully!\n\n" + $"{{ \"name\":\"{info[0]}\", \"bio\": \"{info[1]}\", \"image\": \"{info[2]}\" }}\n";
+                    }
+                    break;
             }
             case 401:
             {
