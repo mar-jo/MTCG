@@ -153,7 +153,9 @@ public static class MessageHandler
 
                 return ResponseHandler.CreateResponseUsers(http, stats, data);
             case "/score":
-                Console.WriteLine("Score branch");
+                var (intCode, scores) = DBHandler.DisplayScoreboard(data);
+
+                return ResponseHandler.CreateResponseScoreboard(intCode, data, scores);
                 break;
             //case "/battles":
             //    Console.WriteLine("Battles branch");

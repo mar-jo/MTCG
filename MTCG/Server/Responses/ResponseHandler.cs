@@ -150,7 +150,7 @@ public class ResponseHandler
         bodyLength += body.Length;
 
         headerStuff += $"Content-Length: {bodyLength}" + Environment.NewLine;
-        headerStuff += "Content-Type: text/html; charset=utf-8" + Environment.NewLine + "" + Environment.NewLine;
+        headerStuff += "Content-Type: text/json; charset=utf-8" + Environment.NewLine + "" + Environment.NewLine;
 
         string response = headerStuff + body + Environment.NewLine + Environment.NewLine;
 
@@ -211,15 +211,15 @@ public class ResponseHandler
         {
             case 200:
             {
-                    if (data["Path"].StartsWith("/stats"))
-                    {
-                        body += "[] Data retrieved successfully!\n\n" + $"{{ \"name\":\"{info[0]}\", \"elo\": \"{info[1]}\", \"wins\": \"{info[2]}\", \"losses\": \"{info[3]}\" }}\n";
-                    }
-                    else
-                    {
-                        body += "[] Data retrieved successfully!\n\n" + $"{{ \"name\":\"{info[0]}\", \"bio\": \"{info[1]}\", \"image\": \"{info[2]}\" }}\n";
-                    }
-                    break;
+                if (data["Path"].StartsWith("/stats"))
+                {
+                    body += "[] Data retrieved successfully!\n\n" + $"{{ \"NAME\":\"{info[0]}\", \"ELO\": \"{info[1]}\", \"WINS\": \"{info[2]}\", \"LOSSES\": \"{info[3]}\" }}\n";
+                }
+                else
+                {
+                    body += "[] Data retrieved successfully!\n\n" + $"{{ \"NAME\":\"{info[0]}\", \"BIO\": \"{info[1]}\", \"IMAGE\": \"{info[2]}\" }}\n";
+                }
+                break;
             }
             case 401:
             {
@@ -248,13 +248,68 @@ public class ResponseHandler
         return response;
     }
 
+    public static string CreateResponseScoreboard(int statusCode, Dictionary<string, string> data, List<List<string>> input)
+    {
+        string reasonPhrase = _reasonPhrases.ContainsKey(statusCode) ? _reasonPhrases[statusCode] : "";
+        string headerStuff = $"{data["HTTP"]} {statusCode} {reasonPhrase}" + Environment.NewLine;
+
+        int bodyLength = 0;
+        string body = "";
+
+        switch (statusCode)
+        {
+            case 200:
+                {
+                    body += BuildScoreBoardResponse(body, input);
+                    break;
+                }
+            case 401:
+                {
+                    body = "[] Access token is missing or invalid...\n";
+                    break;
+                }
+            default:
+                {
+                    body = "[] Internal server error.\n";
+                    break;
+                }
+        }
+
+        bodyLength += body.Length;
+
+        headerStuff += $"Content-Length: {bodyLength}" + Environment.NewLine;
+        headerStuff += "Content-Type: text/html; charset=utf-8" + Environment.NewLine + "" + Environment.NewLine;
+
+        string response = headerStuff + body + Environment.NewLine + Environment.NewLine;
+
+        return response;
+    }
+
+    public static string BuildScoreBoardResponse(string body, List<List<String>> data)
+    {
+        body += "[] The scoreboard could be retrieved successfully!\n";
+        for (int i = 0; i < data.Count; i++)
+        {
+            body += "{ ";
+            body += $"\"NAME\": \"{data[i][0]}\", \"ELO\": \"{data[i][1]}\", \"WINS\": \"{data[i][2]}\", \"LOSSES\": \"{data[i][3]}\"";
+            body += " }";
+            if (i < data.Count - 1)
+            {
+                body += Environment.NewLine;
+            }
+        }
+
+        return body;
+    }
+
+
     public static string BuildCardResponse(string body, Card[] cards)
     {
         body = "[] Cards successfully fetched from DB!\n\n";
 
         foreach (var card in cards)
         {
-            body += $"{{ \"id\":\"{card.Id}\", \"name\": \"{card.Name}\", \"damage\": \"{card.Damage}\" }}\n";
+            body += $"{{ \"ID\":\"{card.Id}\", \"NAME\": \"{card.Name}\", \"DAMAGE\": \"{card.Damage}\" }}\n";
         }
 
         return body;

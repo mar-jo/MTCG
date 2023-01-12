@@ -66,6 +66,20 @@ public class DBHandler
             Console.WriteLine("[-] An error occurred " + ex.Message);
             return 409;
         }
+
+        cmd = new NpgsqlCommand("INSERT INTO statistics (userid) VALUES (@username)", _conn);
+        cmd.Parameters.AddWithValue("username", user["Username"]);
+        cmd.Prepare();
+
+        try
+        {
+            cmd.ExecuteNonQuery();
+        }
+        catch (NpgsqlException ex)
+        {
+            Console.WriteLine("[-] An error occurred " + ex.Message);
+            return 409;
+        }
         finally
         {
             CloseDB();
@@ -649,7 +663,8 @@ public class DBHandler
         {
             ConnectDB();
 
-            var cmd = new NpgsqlCommand("SELECT name, statistics.* FROM users INNER JOIN statistics ON users.username = statistics.userid SORT BY elo", _conn);
+            var cmd = new NpgsqlCommand("SELECT users.name, statistics.elo, statistics.wins, statistics.losses FROM statistics JOIN users ON statistics.userid = users.username ORDER BY statistics.elo", _conn);
+
             cmd.Prepare();
 
             var reader = cmd.ExecuteReader();
@@ -659,7 +674,7 @@ public class DBHandler
             {
                 var temp = new List<string?>
                 {
-                    reader["name"].ToString(),
+                    reader["name"].ToString(), // TODO: check for the ones without name and replace it with something else...
                     reader["elo"].ToString(),
                     reader["wins"].ToString(),
                     reader["losses"].ToString()

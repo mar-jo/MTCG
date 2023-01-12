@@ -24,7 +24,7 @@ public static class ParseData
         {
             if (line.StartsWith("{"))
             {
-                dynamic? user = JsonConvert.DeserializeObject<User>(line);
+                User? user = JsonConvert.DeserializeObject<User>(line);
                 dict.Add("Username", user?.Username);
                 dict.Add("Password", user?.Password);
 
@@ -44,7 +44,7 @@ public static class ParseData
         {
             if (line.StartsWith("{"))
             {
-                dynamic? user = JsonConvert.DeserializeObject<User>(line);
+                User? user = JsonConvert.DeserializeObject<User>(line);
                 userData[0] = user?.Username!; // Warum verwechselt es username mit name???
                 userData[1] = user?.Bio!;
                 userData[2] = user?.Image!;
@@ -62,13 +62,11 @@ public static class ParseData
         var size = 0;
         foreach(var line in lines)
         {
-            if (line.Contains(","))
+            if (line.StartsWith("["))
             {
-                size++;
+                size = line.Split(',').Length;
             }
         }
-
-        size++;
 
         var card_ids = new string[size];
 
@@ -77,10 +75,11 @@ public static class ParseData
             if (line.StartsWith("["))
             {
                 dynamic? cards = JsonConvert.DeserializeObject<string[]>(line);
-
+        
                 for (int i = 0; i < size; i++)
                 {
                     card_ids[i] = cards?[i];
+                    Console.WriteLine($"[!] CARD_ID : {cards?[i]}");
                 }
             }
         }
