@@ -285,6 +285,100 @@ public class ResponseHandler
         return response;
     }
 
+    public static string CreateResponseTrading(int statusCode, Dictionary<string, string> data, List<List<string>> input)
+    {
+        string reasonPhrase = _reasonPhrases.ContainsKey(statusCode) ? _reasonPhrases[statusCode] : "";
+        string headerStuff = $"{data["HTTP"]} {statusCode} {reasonPhrase}" + Environment.NewLine;
+
+        int bodyLength = 0;
+        string body = "";
+
+        switch (statusCode)
+        {
+            case 200:
+            {
+                if (data["Method"] == "POST")
+                {
+                    body += "[] Trading deal successfully created!\n";
+                }
+                else if (data["Method"] == "DELETE")
+                {
+                    body = "[] Trading deal successfully deleted...\n";
+                }
+                else
+                {
+                    body += BuildTradingDataResponse(body, input);
+                }
+                
+                break;
+            }
+            case 203:
+            {
+                body += "[] The request was fine, but there are no trading deals available...\n";
+                break;
+            }
+            case 401:
+            {
+                body = "[] Access token is missing or invalid...\n";
+                break;
+            }
+            case 403:
+            {
+                if (data["Method"] == "DELETE")
+                {
+                    body = "[] The provided deal ID was not found...\n";
+                }
+                else
+                {
+                    body = "[] The deal contains a card that is not owned by the user or locked in the deck...\n";
+                }
+                
+                break;
+            }
+            case 404:
+            {
+                body = "[] The provided deal ID was not found...\n";
+                break;
+            }
+            case 409:
+            {
+                body = "[] A deal with this deal ID already exists...\n";
+                break;
+            }
+            default:
+            {
+                body = "[] Internal server error.\n";
+                break;
+            }
+        }
+
+        bodyLength += body.Length;
+
+        headerStuff += $"Content-Length: {bodyLength}" + Environment.NewLine;
+        headerStuff += "Content-Type: text/html; charset=utf-8" + Environment.NewLine + "" + Environment.NewLine;
+
+        string response = headerStuff + body + Environment.NewLine + Environment.NewLine;
+
+        return response;
+    }
+
+    public static string BuildTradingDataResponse(string body, List<List<String>> data)
+    {
+        body += "[] There are trading deals available, the response contains these!\n";
+        for (int i = 0; i < data.Count; i++)
+        {
+            body += "{ ";
+            body += $"\"TRADEID\": \"{data[i][0]}\", \"TO_TRADE\": \"{data[i][1]}\", \"TYPE\": \"{data[i][2]}\", \"MIN_DAMAGE\": \"{data[i][3]}\", \"USERID\": \"{data[i][4]}\"";
+            body += " }";
+            if (i < data.Count - 1)
+            {
+                body += Environment.NewLine;
+            }
+        }
+
+        return body;
+    }
+
     public static string BuildScoreBoardResponse(string body, List<List<String>> data)
     {
         body += "[] The scoreboard could be retrieved successfully!\n";

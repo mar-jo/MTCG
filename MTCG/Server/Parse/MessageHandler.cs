@@ -58,6 +58,14 @@ public static class MessageHandler
         return false;
     }
 
+    public static string ParseTradeID(Dictionary<string, string> data)
+    {
+        var fullPathParts = data["FullPath"].Split('/');
+        var tradeID = fullPathParts[2];
+
+        return tradeID;
+    }
+
     public static Dictionary<string, string> GetFirstLine(string data)
     {
         var message = new Dictionary<string, string>();
@@ -71,6 +79,11 @@ public static class MessageHandler
         if (message["Path"].StartsWith("/users/"))
         {
             message["Path"] = "/users/username";
+            message.Add("FullPath", firstLineParts[1]);
+        }
+        else if (message["Path"].StartsWith("/tradings/"))
+        {
+            message["Path"] = "/tradings/deal";
             message.Add("FullPath", firstLineParts[1]);
         }
 
@@ -160,9 +173,36 @@ public static class MessageHandler
             //case "/battles":
             //    Console.WriteLine("Battles branch");
             //    break;
-            //case "/tradings":
-            //    Console.WriteLine("Tradings branch");
-            //    break;
+            case "/tradings":
+                if (data["Method"] == "GET")
+                {
+                    var (a, trades) = DBHandler.CheckDeals(data);
+
+                    return ResponseHandler.CreateResponseTrading(a, data, trades);
+                }
+                else if (data["Method"] == "POST")
+                {
+                    var tradingDeal = ParseData.ParseTradingDeal(data, rest);
+                    httpCode = DBHandler.CreateTradeDeal(data, tradingDeal);
+
+                    return ResponseHandler.CreateResponseTrading(httpCode, data, null!);
+                }
+
+                return ResponseHandler.HttpResponseCodeHandler(500, data);
+            case "/tradings/deal":
+                if (data["Method"] == "POST")
+                {
+                    // TODO: REPLACE!
+                    return ResponseHandler.HttpResponseCodeHandler(500, data);
+                }
+                else if (data["Method"] == "DELETE")
+                {
+                    httpCode = DBHandler.DeleteTradeDeal(data, ParseTradeID(data));
+
+                    return ResponseHandler.CreateResponseTrading(httpCode, data, null!);
+                }
+            
+                return ResponseHandler.HttpResponseCodeHandler(500, data);
             default:
                 int code = 500;
                 return ResponseHandler.HttpResponseCodeHandler(code, data);

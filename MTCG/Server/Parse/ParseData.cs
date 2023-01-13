@@ -1,6 +1,7 @@
 ﻿using MTCG.Cards;
 using MTCG.Essentials;
 using Newtonsoft.Json;
+using System.Drawing;
 
 namespace MTCG.Server.Parse;
 
@@ -85,6 +86,31 @@ public static class ParseData
         }
 
         return card_ids;
+    }
+
+    public static string[] ParseTradingDeal(Dictionary<string, string> user, string data)
+    {
+        var lines = data.Split(Environment.NewLine);
+
+        var deal = new string?[5];
+
+        foreach (var line in lines)
+        {
+            if (line.StartsWith("{"))
+            {
+                Trade? trade = JsonConvert.DeserializeObject<Trade>(line);
+
+                deal[0] = trade?.Id!;
+                deal[1] = trade?.CardToTrade!;
+                deal[2] = trade?.Type!;
+                deal[3] = trade?.MinimumDamage!.ToString();
+                deal[4] = GetUsernameOutOfToken(user);
+            }
+        }
+
+        Console.WriteLine($"DEAL => TRADEID : {deal[0]}, USERID : {deal[4]}, CARDTOTRADE : {deal[1]}, TYPE : {deal[2]}, MINIMUM DAMAGE : {deal[3]}");
+
+        return deal as string[];
     }
 
     public static Card[] ParsePackages(string data)

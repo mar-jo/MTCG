@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -47,7 +48,7 @@ public class DBHandler
     {
         ConnectDB();
 
-        var cmd = new NpgsqlCommand("INSERT INTO users (username, password_hash, password_salt) VALUES (@username, @password_hash, @password_salt)", _conn);
+        var cmd = new NpgsqlCommand("INSERT INTO users (username, name, password_hash, password_salt) VALUES (@username, @username, @password_hash, @password_salt)", _conn);
 
         var (hash, salt) = PasswordHasher.Hash(user["Password"]);
         
@@ -674,7 +675,7 @@ public class DBHandler
             {
                 var temp = new List<string?>
                 {
-                    reader["name"].ToString(), // TODO: check for the ones without name and replace it with something else...
+                    reader["name"].ToString(),
                     reader["elo"].ToString(),
                     reader["wins"].ToString(),
                     reader["losses"].ToString()
@@ -686,6 +687,206 @@ public class DBHandler
             CloseDB();
             Console.WriteLine("[+] Data retrieved successfully!");
             return (200, scoreBoard);
+        }
+    }
+
+    public static (int, List<List<string?>>) CheckDeals(Dictionary<string, string> user)
+    {
+        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        {
+            Console.WriteLine("[-] Invalid access-token...");
+            return (401, null!);
+        }
+        else
+        {
+            ConnectDB();
+
+            var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM trading", _conn);
+            cmd.Prepare();
+
+            var reader = cmd.ExecuteReader();
+            int count = 0;
+
+            while (reader.Read())
+            {
+                var countString = reader["count"].ToString();
+                count = int.Parse(countString);
+            }
+
+            reader.Close();
+            CloseDB();
+
+            if (count == 0)
+            {
+                Console.WriteLine("[-] No deals found...");
+                return (203, null!);
+            }
+
+            var trades = new List<List<string?>>();
+            ConnectDB();
+            cmd = new NpgsqlCommand("SELECT * FROM trading", _conn);
+            cmd.Prepare();
+
+            reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                var temp = new List<string?>
+                {
+                    reader["tradeid"].ToString(),
+                    reader["to_trade"].ToString(),
+                    reader["type"].ToString(),
+                    reader["min_damage"].ToString(),
+                    reader["userid"].ToString()
+                };
+                trades.Add(temp);
+            }
+
+            reader.Close();
+            CloseDB();
+
+            Console.WriteLine("[+] Data retrieved successfully!");
+            return (200, trades);
+        }
+    }
+
+    public static int CreateTradeDeal(Dictionary<String, String> user, string[] deal)
+    {
+        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        {
+            Console.WriteLine("[-] Invalid access-token...");
+            return 401;
+        }
+        else
+        {
+            ConnectDB();
+
+            var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM trading WHERE tradeid = @tradeid", _conn);
+            cmd.Parameters.AddWithValue("tradeid", deal[0]);
+            cmd.Prepare();
+
+            var reader = cmd.ExecuteReader();
+            int count = 0;
+
+            while (reader.Read())
+            {
+                var countString = reader["count"].ToString();
+                count = int.Parse(countString);
+            }
+
+            reader.Close();
+
+            if (count != 0)
+            {
+                Console.WriteLine("[-] Trade deal already exists...");
+                CloseDB();
+                return 409;
+            }
+
+            var username = ParseData.GetUsernameOutOfToken(user);
+            cmd = new NpgsqlCommand("SELECT COUNT(*) FROM stack WHERE userid = @username AND cardid = @cardid", _conn);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Parameters.AddWithValue("cardid", deal[1]);
+            cmd.Prepare();
+
+            reader = cmd.ExecuteReader();
+            count = 0;
+
+            while (reader.Read())
+            {
+                var countString = reader["count"].ToString();
+                count = int.Parse(countString);
+            }
+
+            reader.Close();
+
+            if (count == 0)
+            {
+                Console.WriteLine("[-] User does not have the item in their stack...");
+                CloseDB();
+                return 403;
+            }
+
+            cmd = new NpgsqlCommand("INSERT INTO trading (tradeid, userid, to_trade, type, min_damage) VALUES (@tradeid, @userid, @to_trade, @type, @min_damage)", _conn);
+            cmd.Parameters.AddWithValue("tradeid", deal[0]);
+            cmd.Parameters.AddWithValue("userid", username);
+            cmd.Parameters.AddWithValue("to_trade", deal[1]);
+            cmd.Parameters.AddWithValue("type", deal[2]);
+            cmd.Parameters.AddWithValue("min_damage", Int32.Parse(deal[3]));
+            cmd.Prepare();
+
+            cmd.ExecuteNonQuery();
+            CloseDB();
+            Console.WriteLine("[+] Trade deal created successfully!");
+            return 200;
+        }
+    }
+
+    public static int DeleteTradeDeal(Dictionary<String, String> user, String tradeid)
+    {
+        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        {
+            Console.WriteLine("[-] Invalid access-token...");
+            return 401;
+        }
+        else
+        {
+            ConnectDB();
+
+            var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM trading WHERE tradeid = @tradeid", _conn);
+            cmd.Parameters.AddWithValue("tradeid", tradeid);
+            cmd.Prepare();
+
+            var reader = cmd.ExecuteReader();
+            int count = 0;
+
+            while (reader.Read())
+            {
+                var countString = reader["count"].ToString();
+                count = int.Parse(countString);
+            }
+
+            reader.Close();
+
+            if (count == 0)
+            {
+                Console.WriteLine("[-] Trade deal does not exist...");
+                CloseDB();
+                return 404;
+            }
+
+            var username = ParseData.GetUsernameOutOfToken(user);
+            cmd = new NpgsqlCommand("SELECT COUNT(*) FROM trading WHERE tradeid = @tradeid AND userid = @username", _conn);
+            cmd.Parameters.AddWithValue("tradeid", tradeid);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Prepare();
+
+            reader = cmd.ExecuteReader();
+            count = 0;
+
+            while (reader.Read())
+            {
+                var countString = reader["count"].ToString();
+                count = int.Parse(countString);
+            }
+
+            reader.Close();
+
+            if (count == 0)
+            {
+                Console.WriteLine("[-] User is not the owner of the deal...");
+                CloseDB();
+                return 403;
+            }
+
+            cmd = new NpgsqlCommand("DELETE FROM trading WHERE tradeid = @tradeid", _conn);
+            cmd.Parameters.AddWithValue("tradeid", tradeid);
+            cmd.Prepare();
+
+            cmd.ExecuteNonQuery();
+            CloseDB();
+            Console.WriteLine("[+] Trade deal deleted successfully!");
+            return 200;
         }
     }
 }
