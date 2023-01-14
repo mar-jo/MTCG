@@ -11,6 +11,10 @@ public class Card
     public string? Name { get; set; }
     [JsonProperty("Damage")]
     public double Damage { get; set; }
+    public Element Element { get; set; }
+    public Monster Monster { get; set; }
+    public bool IsSpell = false;
+    public bool IsMonster = false;
 
     public Card() { }
 

@@ -14,6 +14,5 @@ public class Trade
     public double MinimumDamage { get; set; }
     [JsonProperty("UserId")]
     public string? UserId { get; set; }
-
     public Trade() { }
 }

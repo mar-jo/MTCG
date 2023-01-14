@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using MTCG.Database;
+using MTCG.Essentials;
 using MTCG.Server.Responses;
 
 namespace MTCG.Server.Parse;
@@ -97,7 +98,7 @@ public static class MessageHandler
         return message;
     }
 
-    public static string BranchHandler(Dictionary<string, string> data, string rest)
+    public static string BranchHandler(Dictionary<string, string> data, string rest, Lobby lobby)
     {
         int httpCode;
 
@@ -170,9 +171,35 @@ public static class MessageHandler
 
                 return ResponseHandler.CreateResponseScoreboard(intCode, data, scores);
                 break;
-            //case "/battles":
-            //    Console.WriteLine("Battles branch");
-            //    break;
+            case "/battles":
+                if (data["Authorization"] != "None")
+                {
+                    lobby.AddPlayer(data);
+
+                    while (lobby.CheckReadyPlayers() != 2)
+                    {
+                        Thread.Sleep(1000);
+                    }
+                    object _lock = new object();
+                    bool _hasExecuted = false;
+                    List<string> log = new();
+
+                    lock (_lock)
+                    {
+                        if (!_hasExecuted)
+                        {
+                            _hasExecuted = true;
+                            log = lobby.InitiateBattle();
+                        }
+
+                        DBHandler.ResetDeck(data);
+                        return ResponseHandler.BuildLoggingBody(data, log);
+                    }
+                }
+                else
+                {
+                    return ResponseHandler.HttpResponseCodeHandler(401, data);
+                }
             case "/tradings":
                 if (data["Method"] == "GET")
                 {
@@ -192,8 +219,12 @@ public static class MessageHandler
             case "/tradings/deal":
                 if (data["Method"] == "POST")
                 {
-                    // TODO: REPLACE!
-                    return ResponseHandler.HttpResponseCodeHandler(500, data);
+                    var dealid = ParseTradeID(data);
+                    var cardid = ParseData.ParseRequestedTradeId(rest);
+
+                    httpCode = DBHandler.ExecuteTradeDeal(data, dealid, cardid);
+
+                    return ResponseHandler.CreateResponseTrading(httpCode, data, null!);
                 }
                 else if (data["Method"] == "DELETE")
                 {

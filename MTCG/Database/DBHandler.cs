@@ -7,7 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using MTCG.Cards;
 using MTCG.Database.Hashing;
+using MTCG.Logic;
 using MTCG.Server.Parse;
+using MTCG.Templates;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -888,5 +890,188 @@ public class DBHandler
             Console.WriteLine("[+] Trade deal deleted successfully!");
             return 200;
         }
+    }
+
+    public static int ExecuteTradeDeal(Dictionary<string, string> user, string? dealid, string? cardid)
+    {
+        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        {
+            Console.WriteLine("[-] Invalid access-token...");
+            return 401;
+        }
+        else
+        {
+            ConnectDB();
+
+            var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM trading WHERE tradeid = @tradeid", _conn);
+            cmd.Parameters.AddWithValue("tradeid", dealid);
+            cmd.Prepare();
+
+            var reader = cmd.ExecuteReader();
+            int count = 0;
+
+            while (reader.Read())
+            {
+                var countString = reader["count"].ToString();
+                count = int.Parse(countString);
+            }
+
+            reader.Close();
+
+            if (count == 0)
+            {
+                Console.WriteLine("[-] Trade deal does not exist...");
+                CloseDB();
+                return 404;
+            }
+
+            var username = ParseData.GetUsernameOutOfToken(user);
+            cmd = new NpgsqlCommand("SELECT COUNT(*) FROM stack WHERE userid = @username AND cardid = @cardid", _conn);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Parameters.AddWithValue("cardid", cardid);
+            cmd.Prepare();
+
+            reader = cmd.ExecuteReader();
+            count = 0;
+
+            while (reader.Read())
+            {
+                var countString = reader["count"].ToString();
+                count = int.Parse(countString);
+            }
+
+            reader.Close();
+
+            if (count == 0)
+            {
+                Console.WriteLine("[-] User does not have the item in their stack...");
+                CloseDB();
+                return 403;
+            }
+
+            cmd = new NpgsqlCommand("SELECT * FROM trading WHERE tradeid = @tradeid", _conn);
+            cmd.Parameters.AddWithValue("tradeid", dealid);
+            cmd.Prepare();
+
+            reader = cmd.ExecuteReader();
+            string? uid = null;
+
+            while (reader.Read())
+            {
+                uid = reader["userid"].ToString();
+            }
+
+            reader.Close();
+
+            if (uid == ParseData.GetUsernameOutOfToken(user))
+            {
+                Console.WriteLine("[-] Can't trade with yourself...");
+                CloseDB();
+                return 403;
+            }
+
+            cmd = new NpgsqlCommand("SELECT * FROM trading WHERE tradeid = @tradeid", _conn);
+            cmd.Parameters.AddWithValue("tradeid", dealid);
+            cmd.Prepare();
+
+            reader = cmd.ExecuteReader();
+            var deal = new string?[7];
+
+            while (reader.Read())
+            {
+                deal[0] = reader["tradeid"].ToString();
+                deal[1] = reader["to_trade"].ToString();
+                deal[2] = reader["type"].ToString();
+                deal[3] = reader["min_damage"].ToString();
+                deal[4] = reader["userid"].ToString();
+            }
+
+            reader.Close();
+
+            cmd = new NpgsqlCommand("SELECT * FROM cards WHERE cardid = @cardid", _conn);
+            cmd.Parameters.AddWithValue("cardid", cardid);
+            cmd.Prepare();
+
+            reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                deal[5] = reader["name"].ToString();
+                deal[6] = reader["damage"].ToString();
+            }
+            
+            reader.Close();
+            CloseDB();
+            
+            var initTrade = new TradingLogic();
+            var tradeDecision = initTrade.ExecuteTrade(deal);
+
+            if (!tradeDecision)
+            {
+                Console.WriteLine("[-] Offered card does not meet the requirements...");
+                return 403;
+            }
+
+            ConnectDB();
+            cmd = new NpgsqlCommand("UPDATE stack SET userid = @username WHERE userid = @uid AND cardid = @cardid", _conn);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Parameters.AddWithValue("uid", uid);
+            cmd.Parameters.AddWithValue("cardid", deal[1]);
+            cmd.Prepare();
+
+            cmd.ExecuteNonQuery();
+
+            cmd = new NpgsqlCommand("UPDATE stack SET userid = @uid WHERE userid = @username AND cardid = @cardid", _conn);
+            cmd.Parameters.AddWithValue("uid", uid);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Parameters.AddWithValue("cardid", cardid);
+            cmd.Prepare();
+
+            cmd.ExecuteNonQuery();
+
+            cmd = new NpgsqlCommand("DELETE FROM trading WHERE tradeid = @tradeid", _conn);
+            cmd.Parameters.AddWithValue("tradeid", dealid);
+            cmd.Prepare();
+
+            cmd.ExecuteNonQuery();
+            CloseDB();
+            Console.WriteLine("[+] Trade deal executed successfully!");
+            return 200;
+        }
+    }
+
+    public static List<Card> FetchUserDeck(List<Card> cards, Dictionary<string, string> player)
+    {
+        ConnectDB();
+        var cmd = new NpgsqlCommand("SELECT deck.username, cards.* FROM deck, cards WHERE username = @username", _conn);
+        cmd.Parameters.AddWithValue("username", ParseData.GetUsernameOutOfToken(player));
+        cmd.Prepare();
+
+        var reader = cmd.ExecuteReader();
+
+        while (reader.Read())
+        {
+            var card = new Card();
+            card.Id = reader["cardid"].ToString();
+            card.Name = reader["name"].ToString();
+            card.Damage = int.Parse(reader["damage"].ToString());
+            cards.Add(card);
+        }
+
+        reader.Close();
+        CloseDB();
+        return cards;
+    }
+
+    public static void ResetDeck(Dictionary<string, string> player)
+    {
+        ConnectDB();
+        var cmd = new NpgsqlCommand("DELETE FROM deck WHERE username = @username", _conn);
+        cmd.Parameters.AddWithValue("username", ParseData.GetUsernameOutOfToken(player));
+        cmd.Prepare();
+
+        cmd.ExecuteNonQuery();
+        CloseDB();
+        Console.WriteLine("[+] Deck reset successfully!");
     }
 }

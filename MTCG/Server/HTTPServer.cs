@@ -3,11 +3,14 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using MTCG.Essentials;
 using MTCG.Server.Parse;
 using MTCG.Server.Responses;
 
 class HTTPServer
 {
+    private static Lobby _lobby = new();
+    
     public static void Server()
     {
         TcpListener? server = null;
@@ -44,15 +47,11 @@ class HTTPServer
                         Console.WriteLine($"\n[!] RECEIVED :\n {data}");
 
                         branch = MessageHandler.GetFirstLine(data);
-                        message = MessageHandler.BranchHandler(branch, data);
+                        message = MessageHandler.BranchHandler(branch, data, _lobby);
 
                         var encodedMsg = System.Text.Encoding.ASCII.GetBytes(message);
                         stream.Write(encodedMsg, 0, encodedMsg.Length);
                     }
-
-                    //var message = Response.FormulateResponse(branch);
-                    //var encodedMsg = System.Text.Encoding.ASCII.GetBytes(message);
-                    //stream.Write(encodedMsg, 0, encodedMsg.Length);
 
                     client.Close();
                 });

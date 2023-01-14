@@ -297,13 +297,17 @@ public class ResponseHandler
         {
             case 200:
             {
-                if (data["Method"] == "POST")
+                if (data.ContainsKey("FullPath"))
+                {
+                    body = "[] Trading deal successfully executed!\n";
+                }
+                else if (data["Method"] == "POST")
                 {
                     body += "[] Trading deal successfully created!\n";
                 }
                 else if (data["Method"] == "DELETE")
                 {
-                    body = "[] Trading deal successfully deleted...\n";
+                    body = "[] Trading deal successfully deleted!\n";
                 }
                 else
                 {
@@ -327,6 +331,10 @@ public class ResponseHandler
                 if (data["Method"] == "DELETE")
                 {
                     body = "[] The provided deal ID was not found...\n";
+                }
+                else if (data.ContainsKey("FullPath"))
+                {
+                    body = "[] The offered card is not owned by the user, or the requirements are not met (Type, MinimumDamage), or the offered card is locked in the deck...\n";
                 }
                 else
                 {
@@ -407,5 +415,27 @@ public class ResponseHandler
         }
 
         return body;
+    }
+
+    public static string BuildLoggingBody(Dictionary<string, string> data, List<string> log)
+    {
+        var statusCode = 200;
+
+        string reasonPhrase = _reasonPhrases.ContainsKey(statusCode) ? _reasonPhrases[statusCode] : "";
+        string headerStuff = $"{data["HTTP"]} {statusCode} {reasonPhrase}" + Environment.NewLine;
+
+        int bodyLength = 0;
+        string body = "";
+
+        body = "\nBATTLE LOG GOES HERE...\n";
+
+        bodyLength += body.Length;
+
+        headerStuff += $"Content-Length: {bodyLength}" + Environment.NewLine;
+        headerStuff += "Content-Type: text/html; charset=utf-8" + Environment.NewLine + "" + Environment.NewLine;
+
+        string response = headerStuff + body + Environment.NewLine + Environment.NewLine;
+
+        return response;
     }
 }

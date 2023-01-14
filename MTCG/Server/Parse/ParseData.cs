@@ -1,5 +1,5 @@
 ﻿using MTCG.Cards;
-using MTCG.Essentials;
+using MTCG.Templates;
 using Newtonsoft.Json;
 using System.Drawing;
 
@@ -111,6 +111,23 @@ public static class ParseData
         Console.WriteLine($"DEAL => TRADEID : {deal[0]}, USERID : {deal[4]}, CARDTOTRADE : {deal[1]}, TYPE : {deal[2]}, MINIMUM DAMAGE : {deal[3]}");
 
         return deal as string[];
+    }
+
+    public static string ParseRequestedTradeId(string data)
+    {
+        var lines = data.Split(Environment.NewLine);
+
+        foreach (var line in lines)
+        {
+            if (line.StartsWith("\""))
+            {
+                var tradeId = line.Split('"')[1];
+                Console.WriteLine($"[!] TRADE_ID : {tradeId}");
+                return tradeId;
+            }
+        }
+        
+        return "";
     }
 
     public static Card[] ParsePackages(string data)

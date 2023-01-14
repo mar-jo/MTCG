@@ -6,6 +6,7 @@ public enum Monster
     Dragon,
     Wizard,
     Ork,
-    Knights,
-    Kraken
+    Knight,
+    Kraken,
+    Elve
 }
