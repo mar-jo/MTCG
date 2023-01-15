@@ -40,14 +40,29 @@ public class BattleLogic
             return ((int)(cardFighterOne.Damage * 2), (int)(cardFighterTwo.Damage / 2));
         }
 
+        if (cardFighterTwo.Element.ToString() == "Fire" && cardFighterOne.Element.ToString() == "Water")
+        {
+            return ((int)(cardFighterOne.Damage / 2), (int)(cardFighterTwo.Damage * 2));
+        }
+
         if (cardFighterOne.Element.ToString() == "Fire" && cardFighterTwo.Element.ToString() == "Regular")
         {
             return ((int)(cardFighterOne.Damage * 2), (int)(cardFighterTwo.Damage / 2));
         }
 
+        if (cardFighterOne.Element.ToString() == "Regular" && cardFighterTwo.Element.ToString() == "Fire")
+        {
+            return ((int)(cardFighterOne.Damage / 2), (int)(cardFighterTwo.Damage * 2));
+        }
+
         if (cardFighterOne.Element.ToString() == "Regular" && cardFighterTwo.Element.ToString() == "Water")
         {
             return ((int)(cardFighterOne.Damage * 2), (int)(cardFighterTwo.Damage / 2));
+        }
+
+        if (cardFighterOne.Element.ToString() == "Water" && cardFighterTwo.Element.ToString() == "Regular")
+        {
+            return ((int)(cardFighterOne.Damage / 2), (int)(cardFighterTwo.Damage * 2));
         }
 
         return ((int)cardFighterOne.Damage, (int)cardFighterTwo.Damage);
@@ -149,12 +164,12 @@ public class BattleLogic
 
         if ((int)damageOne > (int)damageTwo)
         {
-            return ($"{cardFighterOne.Name} VS {cardFighterTwo.Name} => {cardFighterTwo.Name} => {(int)cardFighterOne.Damage} VS {(int)cardFighterTwo.Damage} => {damageOne} VS => {damageTwo} -> {cardFighterOne.Name} wins\n", 0);
+            return ($"{cardFighterOne.Name} VS {cardFighterTwo.Name} => {cardFighterTwo.Name} => {(int)cardFighterOne.Damage} VS {(int)cardFighterTwo.Damage} => {damageOne} VS {damageTwo} -> {cardFighterOne.Name} wins\n", 0);
         }
 
         if ((int)damageOne < (int)damageTwo)
         {
-            return ($"{cardFighterOne.Name} VS {cardFighterTwo.Name} => {cardFighterTwo.Name} => {(int)cardFighterOne.Damage} VS {(int)cardFighterTwo.Damage} => {damageOne} VS => {damageTwo} -> {cardFighterTwo.Name} wins\n", 1);
+            return ($"{cardFighterOne.Name} VS {cardFighterTwo.Name} => {cardFighterTwo.Name} => {(int)cardFighterOne.Damage} VS {(int)cardFighterTwo.Damage} => {damageOne} VS {damageTwo} -> {cardFighterTwo.Name} wins\n", 1);
         }
 
         return ("", 3);

@@ -2,6 +2,7 @@
 
 public enum Monster
 {
+    None,
     Goblin,
     Dragon,
     Wizard,
