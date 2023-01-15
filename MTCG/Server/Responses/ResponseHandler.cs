@@ -427,7 +427,10 @@ public class ResponseHandler
         int bodyLength = 0;
         string body = "";
 
-        body = "\nBATTLE LOG GOES HERE...\n";
+        foreach (var line in log)
+        {
+            body += line;
+        }
 
         bodyLength += body.Length;
 

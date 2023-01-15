@@ -98,7 +98,7 @@ public static class MessageHandler
         return message;
     }
 
-    public static string BranchHandler(Dictionary<string, string> data, string rest, Lobby lobby)
+    public static string BranchHandler(Dictionary<string, string> data, string rest, Lobby lobby, List<string> log)
     {
         int httpCode;
 
@@ -182,7 +182,6 @@ public static class MessageHandler
                     }
                     object _lock = new object();
                     bool _hasExecuted = false;
-                    List<string> log = new();
 
                     lock (_lock)
                     {

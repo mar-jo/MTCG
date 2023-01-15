@@ -10,7 +10,8 @@ using MTCG.Server.Responses;
 class HTTPServer
 {
     private static Lobby _lobby = new();
-    
+    static List<string> log = new();
+
     public static void Server()
     {
         TcpListener? server = null;
@@ -47,7 +48,7 @@ class HTTPServer
                         Console.WriteLine($"\n[!] RECEIVED :\n {data}");
 
                         branch = MessageHandler.GetFirstLine(data);
-                        message = MessageHandler.BranchHandler(branch, data, _lobby);
+                        message = MessageHandler.BranchHandler(branch, data, _lobby, log);
 
                         var encodedMsg = System.Text.Encoding.ASCII.GetBytes(message);
                         stream.Write(encodedMsg, 0, encodedMsg.Length);

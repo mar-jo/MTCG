@@ -32,6 +32,12 @@ public class User
             Username = ParseData.GetUsernameOutOfToken(player);
             Deck = DBHandler.FetchUserDeck(Deck, player);
 
+            if (Deck.Count == 0)
+            {
+                Console.WriteLine("[!] Deck is empty!");
+                return;
+            }
+
             foreach (var card in Deck)
             {
                 if (card.Name.Contains("Fire"))
@@ -75,6 +81,12 @@ public class User
                 else if (card.Name.Contains("Spell"))
                     card.IsSpell = true;
             }
+
+            foreach (var card in Deck)
+            {
+                Console.WriteLine($"[!] CARD : {card.Name}, {card.Damage}, {card.Element}, {card.Monster}, {card.IsSpell}, {card.IsMonster}");
+            }
+            
         }
     }
 }

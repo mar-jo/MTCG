@@ -1,4 +1,5 @@
 ﻿using MTCG.Cards;
+using MTCG.Database;
 using MTCG.Enums;
 using MTCG.Templates;
 
@@ -25,11 +26,31 @@ public class BattleLogic
             fighterOne.Deck.Remove(cardFighterOne);
             fighterTwo.Deck.Add(cardFighterOne);
         }
-        else
+        else if (winner == 0)
         {
             fighterTwo.Deck.Remove(cardFighterTwo);
             fighterOne.Deck.Add(cardFighterTwo);
         }
+    }
+
+    public (int, int) SetNewDamage(Card cardFighterOne, Card cardFighterTwo)
+    {
+        if (cardFighterOne.Element.ToString() == "Water" && cardFighterTwo.Element.ToString() == "Fire")
+        {
+            return ((int)(cardFighterOne.Damage * 2), (int)(cardFighterTwo.Damage / 2));
+        }
+
+        if (cardFighterOne.Element.ToString() == "Fire" && cardFighterTwo.Element.ToString() == "Regular")
+        {
+            return ((int)(cardFighterOne.Damage * 2), (int)(cardFighterTwo.Damage / 2));
+        }
+
+        if (cardFighterOne.Element.ToString() == "Regular" && cardFighterTwo.Element.ToString() == "Water")
+        {
+            return ((int)(cardFighterOne.Damage * 2), (int)(cardFighterTwo.Damage / 2));
+        }
+
+        return ((int)cardFighterOne.Damage, (int)cardFighterTwo.Damage);
     }
 
     public (string, int, bool) CheckSpecialties(Card cardFighterOne, Card cardFighterTwo)
@@ -84,32 +105,59 @@ public class BattleLogic
             return ($"{cardFighterOne.Name} VS {cardFighterTwo.Name} => {cardFighterTwo.Name} wins\n", 1, true);
         }
 
-        return ("", 0, false);
+        return ("", 3, false);
     }
 
-    public (string, bool) CheckMonsterFight(Card cardFigherOne, Card cardFighterTwo)
+    public (string, int, bool) CheckMonsterFight(Card cardFigherOne, Card cardFighterTwo)
     {
         if (!cardFigherOne.IsMonster || !cardFighterTwo.IsMonster)
         {
-            return ("", false);
+            return ("", 3, false);
         }
-        
-        
-    }
 
-    public (string, bool) CheckSpellFight(Card cardFigherOne, Card cardFighterTwo)
-    {
-        if (!cardFigherOne.IsSpell || !cardFighterTwo.IsSpell)
+        if ((cardFigherOne.Damage.Equals(cardFighterTwo.Damage)))
         {
-            return ("", false);
+            return ($"{cardFigherOne.Name} VS {cardFighterTwo.Name} => Draw\n", 3, true);
         }
 
-        
+        if (cardFigherOne.Damage > cardFighterTwo.Damage)
+        {
+            return ($"{cardFigherOne.Name} VS {cardFighterTwo.Name} => {cardFigherOne.Name} wins\n", 0, true);
+        }
+
+        if (cardFigherOne.Damage < cardFighterTwo.Damage)
+        {
+            return ($"{cardFigherOne.Name} VS {cardFighterTwo.Name} => {cardFighterTwo.Name} wins\n", 1, true);
+        }
+
+        return ("", 3, false);
     }
 
-    public string CheckMixedFight(Card cardFigherOne, Card cardFighterTwo)
+    public (string, int) FightWithAbilities(Card cardFighterOne, Card cardFighterTwo)
     {
-        
+        int damageOne = 0, damageTwo = 0;
+
+        if (cardFighterOne.IsSpell || cardFighterTwo.IsSpell)
+        {
+            (damageOne, damageTwo) = SetNewDamage(cardFighterOne, cardFighterTwo);
+        }
+
+        if (damageOne.Equals(damageTwo))
+        {
+            return ($"{cardFighterOne.Name} VS {cardFighterTwo.Name} => Draw\n", 3);
+        }
+
+        if ((int)damageOne > (int)damageTwo)
+        {
+            return ($"{cardFighterOne.Name} VS {cardFighterTwo.Name} => {cardFighterTwo.Name} => {(int)cardFighterOne.Damage} VS {(int)cardFighterTwo.Damage} => {damageOne} VS => {damageTwo} -> {cardFighterOne.Name} wins\n", 0);
+        }
+
+        if ((int)damageOne < (int)damageTwo)
+        {
+            return ($"{cardFighterOne.Name} VS {cardFighterTwo.Name} => {cardFighterTwo.Name} => {(int)cardFighterOne.Damage} VS {(int)cardFighterTwo.Damage} => {damageOne} VS => {damageTwo} -> {cardFighterTwo.Name} wins\n", 1);
+        }
+
+        return ("", 3);
     }
 
     public List<string> Battle(User fighterOne, User fighterTwo)
@@ -127,40 +175,52 @@ public class BattleLogic
             var (cardFighterOne, cardFighterTwo) = GetRandomCards(fighterOne, fighterTwo);
             
             (logEntry, winner, bool isSpecialty) = CheckSpecialties(cardFighterOne, cardFighterTwo);
-            log.Add(logEntry);
 
             if(isSpecialty)
             {
+                log.Add(logEntry);
                 MoveCardToWinner(fighterOne, fighterTwo, cardFighterOne, cardFighterTwo, winner);
 
                 rounds++;
                 continue;
             }
 
-            (logEntry, bool isMonster) = CheckMonsterFight(cardFighterOne, cardFighterTwo);
-            log.Add(logEntry);
+            (logEntry, winner, bool isMonster) = CheckMonsterFight(cardFighterOne, cardFighterTwo);
 
             if (isMonster)
             {
+                log.Add(logEntry);
+                MoveCardToWinner(fighterOne, fighterTwo, cardFighterOne, cardFighterTwo, winner);
+                
                 rounds++;
                 continue;
             }
 
-            (logEntry, bool isSpell) = CheckSpellFight(cardFighterOne, cardFighterTwo);
-            log.Add(logEntry);
+            (logEntry, winner) = FightWithAbilities(cardFighterOne, cardFighterTwo);
 
-            if (isSpell)
-            {
-                rounds++;
-                continue;
-            }
-
-            logEntry = CheckMixedFight(cardFighterOne, cardFighterTwo);
             log.Add(logEntry);
+            MoveCardToWinner(fighterOne, fighterTwo, cardFighterOne, cardFighterTwo, winner);
             
             rounds++;
-        } while (rounds != 100);
-        
-        return null;
+        } while (rounds != 100 && fighterOne.Deck.Count != 0 && fighterTwo.Deck.Count != 0);
+
+        if (fighterOne.Deck.Count > fighterTwo.Deck.Count)
+        {
+            log.Add($"[!] {fighterOne.Username} WINS [!]\n");
+
+            DBHandler.AdjustStatistics(fighterOne.Username, fighterTwo.Username);
+        }
+        else if (fighterOne.Deck.Count < fighterTwo.Deck.Count)
+        {
+            log.Add($"[!] {fighterTwo.Username} WINS [!]\n");
+
+            DBHandler.AdjustStatistics(fighterTwo.Username, fighterOne.Username);
+        }
+        else
+        {
+            log.Add($"[!] DRAW [!]\n");
+        }
+
+        return log;
     }
 }

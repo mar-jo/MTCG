@@ -666,7 +666,7 @@ public class DBHandler
         {
             ConnectDB();
 
-            var cmd = new NpgsqlCommand("SELECT users.name, statistics.elo, statistics.wins, statistics.losses FROM statistics JOIN users ON statistics.userid = users.username ORDER BY statistics.elo", _conn);
+            var cmd = new NpgsqlCommand("SELECT users.name, statistics.elo, statistics.wins, statistics.losses FROM statistics JOIN users ON statistics.userid = users.username ORDER BY statistics.elo DESC", _conn);
 
             cmd.Prepare();
 
@@ -1043,7 +1043,7 @@ public class DBHandler
     public static List<Card> FetchUserDeck(List<Card> cards, Dictionary<string, string> player)
     {
         ConnectDB();
-        var cmd = new NpgsqlCommand("SELECT deck.username, cards.* FROM deck, cards WHERE username = @username", _conn);
+        var cmd = new NpgsqlCommand("SELECT deck.username, cards.* FROM deck JOIN cards ON cards.cardid = deck.card1 OR cards.cardid = deck.card2 OR cards.cardid = deck.card3 OR cards.cardid = deck.card4 WHERE deck.username = @username", _conn);
         cmd.Parameters.AddWithValue("username", ParseData.GetUsernameOutOfToken(player));
         cmd.Prepare();
 
@@ -1066,12 +1066,85 @@ public class DBHandler
     public static void ResetDeck(Dictionary<string, string> player)
     {
         ConnectDB();
-        var cmd = new NpgsqlCommand("DELETE FROM deck WHERE username = @username", _conn);
+
+        var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM deck WHERE username = @username", _conn);
+        cmd.Parameters.AddWithValue("username", ParseData.GetUsernameOutOfToken(player));
+        cmd.Prepare();
+
+        var reader = cmd.ExecuteReader();
+        int count = 0;
+
+        while (reader.Read())
+        {
+            var countString = reader["count"].ToString();
+            count = int.Parse(countString);
+        }
+
+        reader.Close();
+
+        if (count == 0)
+        {
+            Console.WriteLine("[-] Deck has already been deleted...");
+            CloseDB();
+            return;
+        }
+
+        cmd = new NpgsqlCommand("DELETE FROM deck WHERE username = @username", _conn);
         cmd.Parameters.AddWithValue("username", ParseData.GetUsernameOutOfToken(player));
         cmd.Prepare();
 
         cmd.ExecuteNonQuery();
         CloseDB();
         Console.WriteLine("[+] Deck reset successfully!");
+    }
+
+    public static void AdjustStatistics(string winner, string loser)
+    {
+        ConnectDB();
+
+        var cmd = new NpgsqlCommand("UPDATE statistics SET elo = elo + 5, wins = wins + 1 WHERE userid = @username", _conn);
+        cmd.Parameters.AddWithValue("username", winner);
+        cmd.Prepare();
+
+        cmd.ExecuteNonQuery();
+
+        cmd = new NpgsqlCommand("UPDATE statistics SET losses = losses + 1 WHERE userid = @username", _conn);
+        cmd.Parameters.AddWithValue("username", loser);
+        cmd.Prepare();
+
+        cmd.ExecuteNonQuery();
+
+        cmd = new NpgsqlCommand("SELECT elo FROM statistics WHERE userid = @username", _conn);
+        cmd.Parameters.AddWithValue("username", loser);
+        cmd.Prepare();
+
+        var reader = cmd.ExecuteReader();
+        int elo = 0;
+
+        while (reader.Read())
+        {
+            elo = int.Parse(reader["elo"].ToString());
+        }
+
+        reader.Close();
+
+        if (elo < 5)
+        {
+            cmd = new NpgsqlCommand("UPDATE statistics SET elo = 0 WHERE userid = @username", _conn);
+            cmd.Parameters.AddWithValue("username", loser);
+            cmd.Prepare();
+
+            cmd.ExecuteNonQuery();
+        }
+        else
+        {
+            cmd = new NpgsqlCommand("UPDATE statistics SET elo = elo - 5 WHERE userid = @username", _conn);
+            cmd.Parameters.AddWithValue("username", loser);
+            cmd.Prepare();
+
+            cmd.ExecuteNonQuery();
+        }
+
+        CloseDB();
     }
 }
