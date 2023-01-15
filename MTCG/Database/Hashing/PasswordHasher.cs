@@ -2,9 +2,9 @@
 
 namespace MTCG.Database.Hashing;
 
-public static class PasswordHasher
+public class PasswordHasher
 {
-    public static (string, string) Hash(string password)
+    public (string, string) Hash(string password)
     {
         byte[] salt;
         new RNGCryptoServiceProvider().GetBytes(salt = new byte[16]);
@@ -18,8 +18,11 @@ public static class PasswordHasher
         return (hashString, saltString);
     }
 
-    public static bool Verify(string password, string? hashString, string? saltString)
+    public bool Verify(string password, string? hashString, string? saltString)
     {
+        if (password == null || hashString == null || saltString == null)
+            return false;
+
         byte[] hash = Convert.FromBase64String(hashString);
         byte[] salt = Convert.FromBase64String(saltString);
 

@@ -19,7 +19,10 @@ public class DBHandler
 {
     private const string ConnString = "Host=localhost;Username=postgres;Password=admin;Database=MTCG";
     private static NpgsqlConnection? _conn;
-    private static void ConnectDB()
+    private ParseData parser = new();
+    private MessageHandler messageHandler = new();
+    private PasswordHasher passwordHasher = new();
+    private void ConnectDB()
     {
         try
         {
@@ -33,7 +36,7 @@ public class DBHandler
         }
     }
 
-    private static void CloseDB()
+    private void CloseDB()
     {
         try
         {
@@ -46,13 +49,13 @@ public class DBHandler
         }
     }
 
-    public static int CreateUser(Dictionary<string, string> user)
+    public int CreateUser(Dictionary<string, string> user)
     {
         ConnectDB();
 
         var cmd = new NpgsqlCommand("INSERT INTO users (username, name, password_hash, password_salt) VALUES (@username, @username, @password_hash, @password_salt)", _conn);
 
-        var (hash, salt) = PasswordHasher.Hash(user["Password"]);
+        var (hash, salt) = passwordHasher.Hash(user["Password"]);
         
         cmd.Parameters.AddWithValue("username", user["Username"]);
         cmd.Parameters.AddWithValue("password_hash", hash);
@@ -91,7 +94,7 @@ public class DBHandler
         return 201;
     }
 
-    public static int LoginUser(Dictionary<string, string> user)
+    public int LoginUser(Dictionary<string, string> user)
     {
         ConnectDB();
 
@@ -121,7 +124,7 @@ public class DBHandler
             CloseDB();
         }
 
-        if (PasswordHasher.Verify(user["Password"], passwordHash, passwordSalt))
+        if (passwordHasher.Verify(user["Password"], passwordHash, passwordSalt))
         {
             Console.WriteLine("[+] Successfully logged in!");
             return 200;
@@ -133,14 +136,14 @@ public class DBHandler
         }
     }
 
-    public static int CreatePackages(Card[] cards, Dictionary<string, string> data)
+    public int CreatePackages(Card[] cards, Dictionary<string, string> data)
     {
-        if (!MessageHandler.IsAuthorized(data))
+        if (!messageHandler.IsAuthorized(data))
         {
             Console.WriteLine("[-] Invalid access-token...");
             return 401;
         }
-        else if (MessageHandler.IsAdmin(data))
+        else if (messageHandler.IsAdmin(data))
         {
             ConnectDB();
 
@@ -196,16 +199,16 @@ public class DBHandler
         }
     }
 
-    public static int AcquirePackage(Dictionary<string, string> user)
+    public int AcquirePackage(Dictionary<string, string> user)
     {
-        if (!MessageHandler.IsAuthorized(user))
+        if (!messageHandler.IsAuthorized(user))
         {
             Console.WriteLine("[-] Invalid access-token...");
             return 401;
         }
         else
         {
-            var username = ParseData.GetUsernameOutOfToken(user);
+            var username = parser.GetUsernameOutOfToken(user);
 
             ConnectDB();
             var cmd = new NpgsqlCommand("SELECT coins FROM users WHERE username = @username", _conn);
@@ -284,16 +287,16 @@ public class DBHandler
         }
     }
 
-    public static (int, Card[]) DisplayCards(Dictionary<string, string> user)
+    public (int, Card[]) DisplayCards(Dictionary<string, string> user)
     {
-        if (!MessageHandler.IsAuthorized(user))
+        if (!messageHandler.IsAuthorized(user))
         {
             Console.WriteLine("[-] Invalid access-token...");
             return (401, null)!;
         }
         else
         {
-            var username = ParseData.GetUsernameOutOfToken(user);
+            var username = parser.GetUsernameOutOfToken(user);
             ConnectDB();
 
             NpgsqlCommand cmd;
@@ -417,9 +420,9 @@ public class DBHandler
         }
     }
 
-    public static int ConfigureDeck(Dictionary<string, string> user, string[] ids)
+    public int ConfigureDeck(Dictionary<string, string> user, string[] ids)
     {
-        if (!MessageHandler.IsAuthorized(user))
+        if (!messageHandler.IsAuthorized(user))
         {
             Console.WriteLine("[-] Invalid access-token...");
             return 401;
@@ -432,7 +435,7 @@ public class DBHandler
                 return 400;
             }
 
-            var username = ParseData.GetUsernameOutOfToken(user);
+            var username = parser.GetUsernameOutOfToken(user);
             ConnectDB();
 
             var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM deck WHERE username = @username", _conn);
@@ -485,21 +488,21 @@ public class DBHandler
         }
     }
 
-    public static (int, string[]) DisplayUser(Dictionary<string, string> user)
+    public (int, string[]) DisplayUser(Dictionary<string, string> user)
     {
-        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        if (!messageHandler.IsAuthorized(user) && !messageHandler.IsAdmin(user))
         {
             Console.WriteLine("[-] Invalid access-token...");
             return (401, null!);
         }
-        else if (!MessageHandler.CheckCredibility(user))
+        else if (!messageHandler.CheckCredibility(user))
         {
             Console.WriteLine("[-] Invalid path...");
             return (401, null!);
         }
         else
         {
-            var username = ParseData.GetUsernameOutOfToken(user);
+            var username = parser.GetUsernameOutOfToken(user);
             ConnectDB();
 
             var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM users WHERE username = @username", _conn);
@@ -545,21 +548,21 @@ public class DBHandler
         }
     }
 
-    public static int InsertUserData(Dictionary<string, string> user, string[] data)
+    public int InsertUserData(Dictionary<string, string> user, string[] data)
     {
-        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        if (!messageHandler.IsAuthorized(user) && !messageHandler.IsAdmin(user))
         {
             Console.WriteLine("[-] Invalid access-token...");
             return 401;
         }
-        else if (!MessageHandler.CheckCredibility(user))
+        else if (!messageHandler.CheckCredibility(user))
         {
             Console.WriteLine("[-] Invalid path...");
             return 401;
         }
         else
         {
-            var username = ParseData.GetUsernameOutOfToken(user);
+            var username = parser.GetUsernameOutOfToken(user);
             ConnectDB();
 
             var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM users WHERE username = @username", _conn);
@@ -609,16 +612,16 @@ public class DBHandler
         }
     }
 
-    public static (int, string?[]) DisplayStatistics(Dictionary<string, string> user)
+    public (int, string?[]) DisplayStatistics(Dictionary<string, string> user)
     {
-        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        if (!messageHandler.IsAuthorized(user) && !messageHandler.IsAdmin(user))
         {
             Console.WriteLine("[-] Invalid access-token...");
             return (401, null!);
         }
         else
         {
-            var username = ParseData.GetUsernameOutOfToken(user);
+            var username = parser.GetUsernameOutOfToken(user);
             
             ConnectDB();
             var cmd = new NpgsqlCommand("SELECT name FROM users WHERE username = @username", _conn);
@@ -655,9 +658,9 @@ public class DBHandler
         }
     }
 
-    public static (int, List<List<string?>>) DisplayScoreboard(Dictionary<string, string> user)
+    public (int, List<List<string?>>) DisplayScoreboard(Dictionary<string, string> user)
     {
-        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        if (!messageHandler.IsAuthorized(user) && !messageHandler.IsAdmin(user))
         {
             Console.WriteLine("[-] Invalid access-token...");
             return (401, null!);
@@ -692,9 +695,9 @@ public class DBHandler
         }
     }
 
-    public static (int, List<List<string?>>) CheckDeals(Dictionary<string, string> user)
+    public (int, List<List<string?>>) CheckDeals(Dictionary<string, string> user)
     {
-        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        if (!messageHandler.IsAuthorized(user) && !messageHandler.IsAdmin(user))
         {
             Console.WriteLine("[-] Invalid access-token...");
             return (401, null!);
@@ -752,9 +755,9 @@ public class DBHandler
         }
     }
 
-    public static int CreateTradeDeal(Dictionary<String, String> user, string[] deal)
+    public int CreateTradeDeal(Dictionary<String, String> user, string[] deal)
     {
-        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        if (!messageHandler.IsAuthorized(user) && !messageHandler.IsAdmin(user))
         {
             Console.WriteLine("[-] Invalid access-token...");
             return 401;
@@ -785,7 +788,7 @@ public class DBHandler
                 return 409;
             }
 
-            var username = ParseData.GetUsernameOutOfToken(user);
+            var username = parser.GetUsernameOutOfToken(user);
             cmd = new NpgsqlCommand("SELECT COUNT(*) FROM stack WHERE userid = @username AND cardid = @cardid", _conn);
             cmd.Parameters.AddWithValue("username", username);
             cmd.Parameters.AddWithValue("cardid", deal[1]);
@@ -824,9 +827,9 @@ public class DBHandler
         }
     }
 
-    public static int DeleteTradeDeal(Dictionary<String, String> user, String tradeid)
+    public int DeleteTradeDeal(Dictionary<String, String> user, String tradeid)
     {
-        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        if (!messageHandler.IsAuthorized(user) && !messageHandler.IsAdmin(user))
         {
             Console.WriteLine("[-] Invalid access-token...");
             return 401;
@@ -857,7 +860,7 @@ public class DBHandler
                 return 404;
             }
 
-            var username = ParseData.GetUsernameOutOfToken(user);
+            var username = parser.GetUsernameOutOfToken(user);
             cmd = new NpgsqlCommand("SELECT COUNT(*) FROM trading WHERE tradeid = @tradeid AND userid = @username", _conn);
             cmd.Parameters.AddWithValue("tradeid", tradeid);
             cmd.Parameters.AddWithValue("username", username);
@@ -892,9 +895,9 @@ public class DBHandler
         }
     }
 
-    public static int ExecuteTradeDeal(Dictionary<string, string> user, string? dealid, string? cardid)
+    public int ExecuteTradeDeal(Dictionary<string, string> user, string? dealid, string? cardid)
     {
-        if (!MessageHandler.IsAuthorized(user) && !MessageHandler.IsAdmin(user))
+        if (!messageHandler.IsAuthorized(user) && !messageHandler.IsAdmin(user))
         {
             Console.WriteLine("[-] Invalid access-token...");
             return 401;
@@ -925,7 +928,7 @@ public class DBHandler
                 return 404;
             }
 
-            var username = ParseData.GetUsernameOutOfToken(user);
+            var username = parser.GetUsernameOutOfToken(user);
             cmd = new NpgsqlCommand("SELECT COUNT(*) FROM stack WHERE userid = @username AND cardid = @cardid", _conn);
             cmd.Parameters.AddWithValue("username", username);
             cmd.Parameters.AddWithValue("cardid", cardid);
@@ -963,7 +966,7 @@ public class DBHandler
 
             reader.Close();
 
-            if (uid == ParseData.GetUsernameOutOfToken(user))
+            if (uid == parser.GetUsernameOutOfToken(user))
             {
                 Console.WriteLine("[-] Can't trade with yourself...");
                 CloseDB();
@@ -1040,11 +1043,11 @@ public class DBHandler
         }
     }
 
-    public static List<Card> FetchUserDeck(List<Card> cards, Dictionary<string, string> player)
+    public List<Card> FetchUserDeck(List<Card> cards, Dictionary<string, string> player)
     {
         ConnectDB();
         var cmd = new NpgsqlCommand("SELECT deck.username, cards.* FROM deck JOIN cards ON cards.cardid = deck.card1 OR cards.cardid = deck.card2 OR cards.cardid = deck.card3 OR cards.cardid = deck.card4 WHERE deck.username = @username", _conn);
-        cmd.Parameters.AddWithValue("username", ParseData.GetUsernameOutOfToken(player));
+        cmd.Parameters.AddWithValue("username", parser.GetUsernameOutOfToken(player));
         cmd.Prepare();
 
         var reader = cmd.ExecuteReader();
@@ -1063,12 +1066,12 @@ public class DBHandler
         return cards;
     }
 
-    public static void ResetDeck(Dictionary<string, string> player)
+    public void ResetDeck(Dictionary<string, string> player)
     {
         ConnectDB();
 
         var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM deck WHERE username = @username", _conn);
-        cmd.Parameters.AddWithValue("username", ParseData.GetUsernameOutOfToken(player));
+        cmd.Parameters.AddWithValue("username", parser.GetUsernameOutOfToken(player));
         cmd.Prepare();
 
         var reader = cmd.ExecuteReader();
@@ -1090,7 +1093,7 @@ public class DBHandler
         }
 
         cmd = new NpgsqlCommand("DELETE FROM deck WHERE username = @username", _conn);
-        cmd.Parameters.AddWithValue("username", ParseData.GetUsernameOutOfToken(player));
+        cmd.Parameters.AddWithValue("username", parser.GetUsernameOutOfToken(player));
         cmd.Prepare();
 
         cmd.ExecuteNonQuery();
@@ -1098,7 +1101,7 @@ public class DBHandler
         Console.WriteLine("[+] Deck reset successfully!");
     }
 
-    public static void AdjustStatistics(string winner, string loser)
+    public void AdjustStatistics(string winner, string loser)
     {
         ConnectDB();
 

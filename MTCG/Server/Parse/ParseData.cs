@@ -5,9 +5,9 @@ using System.Drawing;
 
 namespace MTCG.Server.Parse;
 
-public static class ParseData
+public class ParseData
 {
-    public static string GetUsernameOutOfToken(Dictionary<string, string> data)
+    public string GetUsernameOutOfToken(Dictionary<string, string> data)
     {
         var splitInTwo = data["Authorization"].Split('-')[0];
         var username = splitInTwo.Split(' ')[1];
@@ -17,7 +17,7 @@ public static class ParseData
         return username;
     }
     
-    public static Dictionary<string, string> ParseUser(Dictionary<string, string> dict, string data)
+    public Dictionary<string, string> ParseUser(Dictionary<string, string> dict, string data)
     {
         var lines = data.Split(Environment.NewLine);
 
@@ -36,7 +36,7 @@ public static class ParseData
         return dict;
     }
 
-    public static string[] ParseUserData(string data)
+    public string[] ParseUserData(string data)
     {
         var lines = data.Split(Environment.NewLine);
         var userData = new string[3];
@@ -46,7 +46,7 @@ public static class ParseData
             if (line.StartsWith("{"))
             {
                 User? user = JsonConvert.DeserializeObject<User>(line);
-                userData[0] = user?.Username!; // Warum verwechselt es username mit name???
+                userData[0] = user?.Username!;
                 userData[1] = user?.Bio!;
                 userData[2] = user?.Image!;
             }
@@ -56,7 +56,7 @@ public static class ParseData
         return userData;
     }
 
-    public static string[] ParseCard(string data)
+    public string[] ParseCard(string data)
     {
         var lines = data.Split(Environment.NewLine);
 
@@ -88,7 +88,7 @@ public static class ParseData
         return card_ids;
     }
 
-    public static string[] ParseTradingDeal(Dictionary<string, string> user, string data)
+    public string[] ParseTradingDeal(Dictionary<string, string> user, string data)
     {
         var lines = data.Split(Environment.NewLine);
 
@@ -113,7 +113,7 @@ public static class ParseData
         return deal as string[];
     }
 
-    public static string ParseRequestedTradeId(string data)
+    public string ParseRequestedTradeId(string data)
     {
         var lines = data.Split(Environment.NewLine);
 
@@ -130,7 +130,7 @@ public static class ParseData
         return "";
     }
 
-    public static Card[] ParsePackages(string data)
+    public Card[] ParsePackages(string data)
     {
         var lines = data.Split(Environment.NewLine);
         int cardCount = 1, packageCount = 0;
@@ -149,21 +149,7 @@ public static class ParseData
                     if (card.StartsWith("\""))
                     {
                         Console.WriteLine($"[+] CARD {cardCount}");
-
                         package = JsonConvert.DeserializeObject<Card[]>(line);
-
-                        //if (package != null)
-                        //{
-                        //    var value = package[packageCount]?.Id;
-                        //    if (value != null) dict.Add("Id", value);
-                        //
-                        //    var name = package[packageCount]?.Name;
-                        //    if (name != null) dict.Add("Name", name);
-                        //
-                        //    dict.Add("Damage",
-                        //        (package[packageCount]?.Damage).ToString() ?? throw new InvalidOperationException());
-                        //}
-                        // Console.WriteLine($"[!] ID: {dict["Id"]}, Name: {dict["Name"]}, Damage: {dict["Damage"]}");
 
                         Console.WriteLine($"[!] ID: {package?[packageCount]?.Id}, Name: {package?[packageCount]?.Name}, Damage: {package?[packageCount]?.Damage}\n");
                         cardCount++;
@@ -175,6 +161,4 @@ public static class ParseData
 
         return package;
     }
-
-    
 }

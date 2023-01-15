@@ -16,6 +16,7 @@ class HTTPServer
     {
         TcpListener? server = null;
         string message = "";
+        MessageHandler messageHandler = new();
 
         try
         {
@@ -47,8 +48,8 @@ class HTTPServer
                         var data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
                         Console.WriteLine($"\n[!] RECEIVED :\n {data}");
 
-                        branch = MessageHandler.GetFirstLine(data);
-                        message = MessageHandler.BranchHandler(branch, data, _lobby, log);
+                        branch = messageHandler.GetFirstLine(data);
+                        message = messageHandler.BranchHandler(branch, data, _lobby, log);
 
                         var encodedMsg = System.Text.Encoding.ASCII.GetBytes(message);
                         stream.Write(encodedMsg, 0, encodedMsg.Length);

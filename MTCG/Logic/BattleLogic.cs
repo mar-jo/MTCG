@@ -182,6 +182,7 @@ public class BattleLogic
         
         int rounds = 0;
         var log = new List<string>();
+        DBHandler db = new DBHandler();
         string logEntry = "";
         int winner = 0;
 
@@ -223,13 +224,13 @@ public class BattleLogic
         {
             log.Add($"[!] {fighterOne.Username} WINS [!]\n");
 
-            DBHandler.AdjustStatistics(fighterOne.Username, fighterTwo.Username);
+            db.AdjustStatistics(fighterOne.Username, fighterTwo.Username);
         }
         else if (fighterOne.Deck.Count < fighterTwo.Deck.Count)
         {
             log.Add($"[!] {fighterTwo.Username} WINS [!]\n");
 
-            DBHandler.AdjustStatistics(fighterTwo.Username, fighterOne.Username);
+            db.AdjustStatistics(fighterTwo.Username, fighterOne.Username);
         }
         else
         {

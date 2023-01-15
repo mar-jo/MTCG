@@ -6,7 +6,7 @@ namespace MTCG.Server.Responses;
 
 public class ResponseHandler
 {
-    private static Dictionary<int, string> _reasonPhrases = new Dictionary<int, string>
+    private Dictionary<int, string> _reasonPhrases = new Dictionary<int, string>
     {
         { 200, "OK" },
         { 201, "Created" },
@@ -18,7 +18,7 @@ public class ResponseHandler
         { 409, "Conflict" }
     };
     
-    private static void CreateToken(Dictionary<string, string> data)
+    private void CreateToken(Dictionary<string, string> data)
     {
         if (data["Authorization"] == "None")
         {
@@ -26,7 +26,7 @@ public class ResponseHandler
         }
     }
 
-    public static string HttpResponseCodeHandler(int statusCode, Dictionary<string, string> data)
+    public string HttpResponseCodeHandler(int statusCode, Dictionary<string, string> data)
     {
         string reasonPhrase = _reasonPhrases.ContainsKey(statusCode) ? _reasonPhrases[statusCode] : "";
         string headerStuff = $"{data["HTTP"]} {statusCode} {reasonPhrase}" + Environment.NewLine;
@@ -157,7 +157,7 @@ public class ResponseHandler
         return response;
     }
 
-    public static string CreateResponseCards(int statusCode, Card[] cards, Dictionary<string, string> data)
+    public string CreateResponseCards(int statusCode, Card[] cards, Dictionary<string, string> data)
     {
         string reasonPhrase = _reasonPhrases.ContainsKey(statusCode) ? _reasonPhrases[statusCode] : "";
         string headerStuff = $"{data["HTTP"]} {statusCode} {reasonPhrase}" + Environment.NewLine;
@@ -199,7 +199,7 @@ public class ResponseHandler
         return response;
     }
 
-    public static string CreateResponseUsers(int statusCode, string?[] info, Dictionary<string, string> data)
+    public string CreateResponseUsers(int statusCode, string?[] info, Dictionary<string, string> data)
     {
         string reasonPhrase = _reasonPhrases.ContainsKey(statusCode) ? _reasonPhrases[statusCode] : "";
         string headerStuff = $"{data["HTTP"]} {statusCode} {reasonPhrase}" + Environment.NewLine;
@@ -248,7 +248,7 @@ public class ResponseHandler
         return response;
     }
 
-    public static string CreateResponseScoreboard(int statusCode, Dictionary<string, string> data, List<List<string>> input)
+    public string CreateResponseScoreboard(int statusCode, Dictionary<string, string> data, List<List<string>> input)
     {
         string reasonPhrase = _reasonPhrases.ContainsKey(statusCode) ? _reasonPhrases[statusCode] : "";
         string headerStuff = $"{data["HTTP"]} {statusCode} {reasonPhrase}" + Environment.NewLine;
@@ -285,7 +285,7 @@ public class ResponseHandler
         return response;
     }
 
-    public static string CreateResponseTrading(int statusCode, Dictionary<string, string> data, List<List<string>> input)
+    public string CreateResponseTrading(int statusCode, Dictionary<string, string> data, List<List<string>> input)
     {
         string reasonPhrase = _reasonPhrases.ContainsKey(statusCode) ? _reasonPhrases[statusCode] : "";
         string headerStuff = $"{data["HTTP"]} {statusCode} {reasonPhrase}" + Environment.NewLine;
@@ -370,7 +370,7 @@ public class ResponseHandler
         return response;
     }
 
-    public static string BuildTradingDataResponse(string body, List<List<String>> data)
+    public string BuildTradingDataResponse(string body, List<List<String>> data)
     {
         body += "[] There are trading deals available, the response contains these!\n";
         for (int i = 0; i < data.Count; i++)
@@ -387,7 +387,7 @@ public class ResponseHandler
         return body;
     }
 
-    public static string BuildScoreBoardResponse(string body, List<List<String>> data)
+    public string BuildScoreBoardResponse(string body, List<List<String>> data)
     {
         body += "[] The scoreboard could be retrieved successfully!\n";
         for (int i = 0; i < data.Count; i++)
@@ -405,7 +405,7 @@ public class ResponseHandler
     }
 
 
-    public static string BuildCardResponse(string body, Card[] cards)
+    public string BuildCardResponse(string body, Card[] cards)
     {
         body = "[] Cards successfully fetched from DB!\n\n";
 
@@ -417,7 +417,7 @@ public class ResponseHandler
         return body;
     }
 
-    public static string BuildLoggingBody(Dictionary<string, string> data, List<string> log)
+    public string BuildLoggingBody(Dictionary<string, string> data, List<string> log)
     {
         var statusCode = 200;
 

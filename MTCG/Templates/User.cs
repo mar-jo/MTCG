@@ -24,13 +24,27 @@ public class User
     public int Coins { get; set; }
 
     public List<Card> Deck = new();
-    
+
+    public User() { }
+    public User(string username, string password, string name, string bio, string image, int coins)
+    {
+        Username = username;
+        Password = password;
+        Name = name;
+        Bio = bio;
+        Image = image;
+        Coins = coins;
+    }
+
     public User(Dictionary<string, string> player)
     {
         if (player != null) 
-        { 
-            Username = ParseData.GetUsernameOutOfToken(player);
-            Deck = DBHandler.FetchUserDeck(Deck, player);
+        {
+            DBHandler db = new();
+            ParseData parser = new();
+
+            Username = parser.GetUsernameOutOfToken(player);
+            Deck = db.FetchUserDeck(Deck, player);
 
             if (Deck.Count == 0)
             {
